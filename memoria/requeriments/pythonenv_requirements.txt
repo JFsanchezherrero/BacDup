@@ -1,9 +1,0 @@
-bcbio-gff==0.6.6
-biopython==1.78
-ftputil==4.0.0
-numpy==1.19.2
-pandas==1.1.2
-python-dateutil==2.8.1
-pytz==2020.1
-six==1.15.0
-wget==3.2
