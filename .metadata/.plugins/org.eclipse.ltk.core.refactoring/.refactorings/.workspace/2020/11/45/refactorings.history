@@ -1,3 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">&#x0A;<refactoring comment="Delete resource &apos;ejercicios/parser&apos;" deleteContents="false" description="Delete resource &apos;ejercicios/parser&apos;" element1="/ejercicios/parser" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1604345973200"/>&#x0A;<refactoring comment="Delete resource &apos;ejercicios/ol.py&apos;" deleteContents="false" description="Delete resource &apos;ejercicios/ol.py&apos;" element1="/ejercicios/ol.py" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1604352933686"/>
-</session>

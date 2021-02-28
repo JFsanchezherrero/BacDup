@@ -1,3 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">&#x0A;<refactoring comment="Delete resource &apos;ejercicios/basic_gbf_parsing.py&apos;" deleteContents="false" description="Delete resource &apos;ejercicios/basic_gbf_parsing.py&apos;" element1="/ejercicios/basic_gbf_parsing.py" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1604254371821"/>&#x0A;<refactoring comment="Delete resource &apos;ejercicios/gff.py&apos;" deleteContents="false" description="Delete resource &apos;ejercicios/gff.py&apos;" element1="/ejercicios/gff.py" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1604255492879"/>
-</session>
