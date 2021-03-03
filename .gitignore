@@ -1,0 +1,6 @@
+## environment
+env/BacDup/
+
+## eclipse
+.pydevproject
+.project

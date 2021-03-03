@@ -6,43 +6,13 @@ Created on 28 nov. 2020
 
 import os
 import sys
-
 import subprocess
 import argparse
+
+import HCGB.functions
 from argparse import ArgumentParser
+from HCGB.functions import blast_functions
 
-#from Bio.Blast.Applications import NcbiblastpCommandline
-
-#https://github.com/HCGB-IGTP/HCGB_python_functions/blob/ce1762b709e3b9094c0630f63bfb9d33544ed4c3/HCGB/functions/blast_functions.py
-#####
-def makeblastdb(makeblastdb_exe, fasta_file, db_path_name):
-    print()
-    
-    cmd_makeblastdb = "%s -in %s -input_type fasta -dbtype %s -out %s" %(makeblastdb_exe, fasta_file, 'prot', db_path_name)
-    code = system_call(cmd_makeblastdb)
-        ##
-        ## -> ¿distinguir que sea un fasta con aminoácidos y no nucleótidos?
-        ##
-    if (code == 'FAIL'):
-        print ('****ERROR: Some error happened during the makeblastDB command')
-        print (cmd_makeblastdb)
-        exit()
-    else:
-        return(True)
-
-#####        
-def blastp_caller(blastp_exe, fasta_file, db_path_name, output_file):
-    print()
-    cmd_makeblast_results = "%s -query %s -db %s -outfmt \'6 std qlen slen\' -num_threads 1 -out %s" %(blastp_exe, fasta_file, db_path_name, output_file)
-    code_results = system_call(cmd_makeblast_results)
-    
-    if (code_results == 'FAIL'):
-        print ('****ERROR: Some error happened during the blastp command')
-        print (cmd_makeblast_results)
-        exit()
-    else:
-        return(True)
-    
 #####    
 def create_blast_results(arg_dict):
     
@@ -60,6 +30,7 @@ def create_blast_results(arg_dict):
         print("## Debug: name_file and extension ")
         print(os.path.splitext(file_name_abs_path))
             
+    ## TODO: Check file is really a fasta file (wait for development in scripts/format_check.check_format)
     if extension in compt["fasta"]:
             
         if arg_dict["debug"]:
@@ -69,7 +40,6 @@ def create_blast_results(arg_dict):
         ## create blast database
         makeblastdb_exe = arg_dict["blast_folder"] + "/makeblastdb"
         blastp_exe = arg_dict["blast_folder"] + "/blastp"
-        ##-> blast_folder = /usr/bin
 
         if (arg_dict["db_name"]):
             db_path_name = os.path.abspath(arg_dict["db_name"])+ "/" + arg_dict["db_name"]
@@ -80,19 +50,16 @@ def create_blast_results(arg_dict):
         else:
             db_path_name = basename + "_db"
             raw_blast = "BLAST_raw_results.txt"
-    
-         
-        
+            
         if (os.path.isfile(db_path_name + '.phr')):
             print ("+ BLAST database is already generated...")
             exit()
         else:
-            makeblastdb(makeblastdb_exe, arg_dict["fasta_file"], db_path_name)
+            blast_functions.makeblastdb(db_path_name, arg_dict["fasta_file"], makeblastdb_exe) # HCGB function
         
-        ## create blastp outfile
-            
-            blastp_caller(blastp_exe, arg_dict["fasta_file"], db_path_name, raw_blast)
-        
+            ## create blastp outfile
+            blast_functions.blastp(blastpexe, raw_blast, db_path_name, arg_dict["fasta_file"], 1) # HCGB function
+                
         return (raw_blast)
              
     else:
@@ -128,7 +95,6 @@ def system_call(cmd, returned=False, message=True):
         return ('FAIL')
     
 
-    
 ####################
 ## Arguments
 ####################
