@@ -32,7 +32,7 @@ The development of this research originally started at:
 
 So far, the pipeline is under development. The workflow is shown here:
 
-![Workflow](images/workflow.png)
+![Workflow](image/workflow.png)
 
 
 # License
