@@ -7,14 +7,13 @@ Created on 13 dic. 2020
 import os
 import argparse
 from argparse import ArgumentParser
-
+from termcolor import colored
 
 import pandas as pd
 from collections import defaultdict 
 
-
-import dup_searcher
-import input_parser
+import BacDup.modules.dup_searcher
+import BacDup.modules.input_parser
 
 
 #############

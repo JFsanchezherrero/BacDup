@@ -1,17 +1,25 @@
+#!/usr/bin/env python3
+##############################################################
+## Jose F. Sanchez & Alba Moya                              ##
+## Copyright (C) 2020-2021                                  ##
+##############################################################
 '''
 Created on 28 oct. 2020
-
 @author: alba
+
+Modified in March 2021
+@author: Jose F. Sanchez-Herrero
 '''
+
+## useful imports
 import sys
 import os
 import pandas as pd
 import numpy as np
-import output
-import Bio
+import HCGB
+
 from Bio import SeqIO, Seq
 from Bio.SeqRecord import SeqRecord
-import BCBio
 from BCBio import GFF
 
 #### take care of the inferred parents ####
@@ -22,8 +30,7 @@ def main (gff_file, ref_file, output_folder, debug=False):
     gff_file = os.path.abspath(gff_file)
     
     #create folder
-    output_path = os.path.abspath(output_folder)
-    output.create_folder(output_path)
+    output_path = HCGB.functions.file_functions.create_folder(output_path)
     
     if (debug):
         print ("## DEBUG:")

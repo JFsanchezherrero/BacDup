@@ -8,9 +8,8 @@ import os
 import sys
 import subprocess
 import argparse
-
-import HCGB.functions
 from argparse import ArgumentParser
+
 from HCGB.functions import blast_functions
 
 #####    

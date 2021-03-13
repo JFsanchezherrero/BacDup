@@ -1,21 +1,15 @@
+#!/usr/bin/env python3
+##############################################################
+## Jose F. Sanchez & Alba Moya                              ##
+## Copyright (C) 2020-2021                                  ##
+##############################################################
 '''
 Created on 25 oct. 2020
-
 @author: alba
+
+Modified in March 2021
+@author: Jose F. Sanchez-Herrero
 '''
-import os
-import sys
-import output
-
-import argparse
-from argparse import ArgumentParser
-
-import Bio
-from Bio import SeqIO
-
-import protein_gbf
-import protein_gff
-
 
 ############
     # 1: identificar annot_file: GFF / Genbank / None
@@ -29,8 +23,25 @@ import protein_gff
     # ToDO: create gtf parser
 #############
 
-#####       
-def input_parser(arg_dict):
+
+## useful imports
+import os
+import sys
+import argparse
+from Bio import SeqIO
+import HCGB
+from termcolor import colored
+
+## my modules
+import BacDup.scripts.gbf_parser
+import BacDup.scripts.gff_parser
+
+##########################
+def help_input():
+    print (colored("\n\n***** TODO: Generate this help message *****\n\n", 'red'))
+
+##########################
+def run_input(arg_dict):
         
     compt = {}
     compt["fasta"] = [".fa", ".faa", ".mpfa", ".fna", ".fsa", ".fas", ".fasta"]
@@ -43,7 +54,7 @@ def input_parser(arg_dict):
         
     ## output
     output_path= os.path.abspath(arg_dict["out_folder"]) 
-    output.create_folder(output_path)
+    HCGB.functions.file_functions.create_folder(output_path)
      
     #get  annot file absolute path    
     file_name_abs_path = os.path.abspath(arg_dict["annot_file"])
@@ -61,7 +72,7 @@ def input_parser(arg_dict):
             print("######")
         else:
         ## call gbf_parser
-            prot_file, csv_file = protein_gbf.gbf_parser_caller(arg_dict["annot_file"], output_path, arg_dict["debug"])
+            prot_file, csv_file = gbf_parser.gbf_parser_caller(arg_dict["annot_file"], output_path, arg_dict["debug"])
             return (prot_file, csv_file)
         if arg_dict["debug"]:
                 print("## DEBUG: prot_file ")
@@ -83,7 +94,7 @@ def input_parser(arg_dict):
             
             if ref_extension in compt["fasta"]:
                 #protein_gff.protein_recs(arg_dict["annot_file"], arg_dict["ref_file"])
-                prot_file, csv_file = protein_gff.gff_parser_caller(arg_dict["annot_file"], arg_dict["ref_file"], output_path, arg_dict["debug"])
+                prot_file, csv_file = gff_parser.gff_parser_caller(arg_dict["annot_file"], arg_dict["ref_file"], output_path, arg_dict["debug"])
                 return (prot_file, csv_file)
     
             else:
@@ -99,42 +110,3 @@ def input_parser(arg_dict):
         print("#GFF3: ")
         print(compt["GFF"])
         print("######")
-       
-
-####################
-## arguments
-####################
-    
-## Cuando no se importe como un modulo este script, se ejecutara esto
-if __name__ == '__main__':
-    parser = ArgumentParser(prog='inputParser',
-                            formatter_class=argparse.RawDescriptionHelpFormatter,
-                            description="Get proteins sequences from annotation file")
-    requiredNamed = parser.add_argument_group('required named arguments')
-    requiredNamed.add_argument("-a", "--annot_file", metavar="", help="Annotation file: genbank or GFF", required=True)
-    requiredNamed.add_argument("-o", "--out_folder", metavar= "", help="Results folder", required=True)
-    parser.add_argument("-r", "--ref_file", metavar="", help="Genome references FASTA file")
-    #parser.add_argument("-p", "--prot_file", metavar="", help="Protein sequence file")
-    parser.add_argument("--debug", action="store_true", default=False)   
-    
-    arg = parser.parse_args()
-    arg_dict = vars(arg)
-    
-  
-    if arg.annot_file is None or arg.out_folder is None:
-        print("######")
-        print("Please provide either an annotation file or/and an output path folder")
-        print("######")
-        print(parser.print_help())
-        exit()
-        
-    if arg.debug:
-        print("##DEBUG: ##")
-        print("arguments dictionary: ")
-        print(arg)
-
-    input_parser(arg_dict)
-
-
-
-         

@@ -1,6 +1,13 @@
 ## environment
-env/BacDup/
+code/env/BacDup/
 
 ## eclipse
 .pydevproject
 .project
+
+## builds pip
+code/BacDup.egg-info/
+code/build/
+code/dist/
+code/.pypirc
+

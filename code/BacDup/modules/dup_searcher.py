@@ -4,14 +4,14 @@ Created on 3 dic. 2020
 @author: alba
 '''
 import os
-
 import pandas as pd
 import numpy as np
+from termcolor import colored
 
 import argparse
 from argparse import ArgumentParser
 
-import blast_caller
+import BacDup.scripts.blast_caller
 
 #https://biopython-tutorial.readthedocs.io/en/latest/notebooks/07%20-%20Blast.html#Parsing-BLAST-output
 
