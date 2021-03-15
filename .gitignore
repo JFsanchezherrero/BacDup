@@ -1,3 +1,8 @@
+## python
+code/BacDup/__pycache__/
+code/BacDup/scripts/__pycache__/
+code/BacDup/modules/__pycache__/
+
 ## environment
 code/env/BacDup/
 
@@ -11,3 +16,5 @@ code/build/
 code/dist/
 code/.pypirc
 
+## test
+code/test

@@ -42,7 +42,21 @@ def help_input():
 
 ##########################
 def run_input(arg_dict):
-        
+    
+    """
+    Main function of the input_parser module in BacDup package.
+    
+    This module prepares data for later gene duplication analysis. 
+    
+    It allows the user to provide either a single sample, multiple samples or NCBI 
+    GenBank IDs to retrieve and obtain the data.    
+    """
+    
+    ## help message
+    if arg_dict.help_input():
+        help_input()
+        exit()
+    
     compt = {}
     compt["fasta"] = [".fa", ".faa", ".mpfa", ".fna", ".fsa", ".fas", ".fasta"]
     compt["genbank"] = [".genbank", ".gb", ".gbf", ".gbff", ".gbk"]
