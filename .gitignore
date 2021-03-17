@@ -4,3 +4,4 @@ env/BacDup/
 ## eclipse
 .pydevproject
 .project
+/.metadata/
