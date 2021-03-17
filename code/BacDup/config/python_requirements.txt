@@ -1,3 +1,5 @@
+colored
+HCGB
 bcbio-gff
 biopython
 ftputil
@@ -7,3 +9,4 @@ python-dateutil
 pytz
 six
 wget
+ncbi-genome-download
