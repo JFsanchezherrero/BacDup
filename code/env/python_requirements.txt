@@ -1,0 +1,1 @@
+../BacDup/config/python_requirements.txt
