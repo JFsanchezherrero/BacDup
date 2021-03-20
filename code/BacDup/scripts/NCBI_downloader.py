@@ -5,7 +5,6 @@ Created and modified in March 2021
 
 Original code retrieved from BacterialTyper database_generator.py script.
 
-
 This code downloads information for NCBI assembly IDs provided
 '''
 ## useful imports
@@ -77,6 +76,7 @@ def ngd_download(acc_ID, data_folder, debug):
         
             ngd.download(section='refseq', file_formats='fasta,gff,protein-fasta,genbank', 
                          assembly_accessions=acc_ID, output=data_folder, groups='bacteria')
+        
         ## check if files are gunzip
         files = os.listdir(dir_path)
         files_list = []        
@@ -87,8 +87,9 @@ def ngd_download(acc_ID, data_folder, debug):
                 HCGB.functions.files_functions.extract(dir_path + '/' + f, dir_path)
                 #os.remove(dir_path + '/' + f)
     else:
-        print ('+ Data is already available, no need to download it again')
+        print ('\t+ Data is already available, no need to download it again')
     
+    print()
     ## return path where data is
     return (dir_path)
 
@@ -147,11 +148,8 @@ def NCBIdownload(acc_ID, data_folder, debug):
     ## check if any plasmids downloaded
     plasmid_count = 0
     plasmid_id = []
-    contig_out_file = dir_path + '/' + acc_ID + '_chromosome.fna'
-    plasmid_out_file = dir_path + '/' + acc_ID + '_plasmid.fna' 
-    
+
     ## open
-    contig_out_file_handle = open(contig_out_file, 'w')
     for seq_record in SeqIO.parse(genome, "fasta"):
         plasmid_search = re.search(r".*plasmid.*", seq_record.description)
         if plasmid_search:
@@ -159,10 +157,25 @@ def NCBIdownload(acc_ID, data_folder, debug):
             name = str( seq_record.id )
             plasmid_id.append(name)
         
-
-    ## TODO: call e-direct to retrieve information for each entry download it.
-    dataDownloaded=pd.DataFrame(columns=('ID','folder','genus','species','name','genome', 'chr', 'GFF','GBK', 'proteins','plasmids_number','plasmids_ID'))
-    dataDownloaded.loc[len(dataDownloaded)] = (acc_ID, dir_path, "", "", "", genome, contig_out_file, gff, prot, gbk, plasmid_count, "::".join(plasmid_id))
+    ## read Genbank file to retrieve information for each samle
+    ## https://biopython.org/wiki/SeqRecord
+    # get
+    for index, record in enumerate(SeqIO.parse(gbk, "genbank")):
+        
+        if (index == 0): ## only for first entry == Main chromosome
+            if debug:
+                debug_message("******************************************")
+                debug_message("SeqIO.read(gbk, 'genbank') info:", color="yellow")
+                debug_message("record", color="yellow")
+                debug_message(record, color="yellow")
+                
+            organism = record.annotations['source']
+            taxonomy = record.annotations['taxonomy']
+            taxonomy_string = ";".join(taxonomy)
+        
+    ## save into dataframe
+    dataDownloaded=pd.DataFrame(columns=('ID','folder','genus','species','taxonomy','genome', 'GFF','GBK', 'proteins','plasmids_number','plasmids_ID'))
+    dataDownloaded.loc[len(dataDownloaded)] = (acc_ID, dir_path, taxonomy[-1], organism, taxonomy_string, genome, gff, prot, gbk, plasmid_count, ";".join(plasmid_id))
 
     ## return dataframe containing all information
     if debug:
@@ -211,7 +224,7 @@ def get_files_download(folder, debug):
 
 ###############################################################
 def help_options():
-    print ("\nUSAGE: python %s ID_file folder\n"  %os.path.realpath(__file__))
+    print ("\nUSAGE: python %s ID_file folder Debug[True/False]\n"  %os.path.realpath(__file__))
     print ("---------------")
     print ("ID_file example: list of Genbank or Refseq IDs")    
     print ("---------------")
@@ -242,13 +255,15 @@ def main():
     strains2get = HCGB.functions.main_functions.readList_fromFile(ID_file)
     
     ## debug messages
-    print ('*******************************')
-    debug_message("Mode ON")
-    print ('*******************************')
+    Debug=False
+    if (sys.argv[3]=="True"):
+        print ('*******************************')
+        debug_message("Mode ON")
+        print ('*******************************')
+        Debug=True
     
-    data = NCBI_download_list(strains2get, folder, True)
+    data = NCBI_download_list(strains2get, folder, Debug)
     print ("+ Data has been retrieved.\n")
-    print ("+ End")
     
 
 ############################################################
