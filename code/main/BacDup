@@ -48,7 +48,7 @@ subparser_help_name = subparser_help.add_argument_group("Show additional help in
 subparser_help = subparser_help_name.add_mutually_exclusive_group(required= True)
 subparser_help.add_argument("--help_project", action="store_true", help="...")
 subparser_help.add_argument("--help_format", action="store_true", help="...")
-subparser_help.add_argument("--help_input", action="store_true", help="Provide additional help on input format")
+subparser_help.add_argument("--input_help", action="store_true", help="Provide additional help on input format")
 subparser_help.add_argument("--help_multiqc", action="store_true", help="Show additional help on the multiQC module.")
 subparser_help.add_argument("--help_input_MGE", action="store_true", help="Print further information for input options under MGE module.")
 subparser_help.add_argument("--help_MGE_analysis", action="store_true", help="Print further information for Mobile Genetic Element module analysis.")
@@ -98,12 +98,15 @@ other_parameters_input.add_argument("--ref_file", metavar="", help="Genome refer
 
 batch_parameters_input = subparser_input.add_argument_group("Input batch options")
 batch_parameters_input.add_argument("--batch", action="store_true", help="Provide this option if input are csv files containing a samples names and paths (csv format).")
-batch_parameters_input.add_argument("--in_sample", help="File containing a list of samples to include (one per line) from input folder(s) [Default OFF].")
-batch_parameters_input.add_argument("--ex_sample", help="File containing a list of samples to exclude (one per line) from input folder(s) [Default OFF].")
+batch_parameters_input.add_argument("--in_sample", help="File containing a list of samples to include (one per line) from input information [Default OFF].")
+batch_parameters_input.add_argument("--ex_sample", help="File containing a list of samples to exclude (one per line) from input information [Default OFF].")
 
 config_input = subparser_input.add_argument_group("Configuration")
 config_input.add_argument("--debug", action="store_true", default=False)
 config_input.add_argument("--detached", action="store_true", help="Isolated mode. --input is a folder containing fastq reads. Provide a unique path o several using --batch option")
+
+help_input = subparser_input.add_argument_group("Additional information")
+help_input.add_argument("--input_help", action="store_true", help="Provide additional help on input format")
 
 subparser_input.set_defaults(func=BacDup.modules.input_parser.run_input)   
 ##-------------------------------------------------------------##

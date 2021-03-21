@@ -31,8 +31,8 @@ def run_info(options):
         exit()
 
     ## help_input option
-    if (options.help_input):
-        BacDup.modules.input_parser.help_input()
+    if (options.input_help):
+        BacDup.modules.input_parser.input_help()
         exit()
 
     

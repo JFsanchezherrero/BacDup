@@ -61,7 +61,7 @@ def run_input(arg_dict):
         
     ## output
     output_path= os.path.abspath(arg_dict["out_folder"])
-    HCGB.functions.file_functions.create_folder(output_path)
+    HCGB.functions.files_functions.create_folder(output_path)
 
     #get  annot file absolute path    
     file_name_abs_path = os.path.abspath(arg_dict["annot_file"])
@@ -153,5 +153,3 @@ if __name__ == '__main__':
 
     input_parser(arg_dict)
 
-if __name__ == '__main__':
-    pass
