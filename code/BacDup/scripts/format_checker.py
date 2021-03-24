@@ -3,63 +3,88 @@ Created on 18 mar. 2021
 
 @author: alba
 '''
+
+import os
 from Bio import SeqIO
 import BCBio
 from BCBio import GFF
 import sys
 
-def is_fasta(filename):
+
+def is_fasta(filename, debug):
     with open(filename, "r") as handle:
         fasta = SeqIO.parse(handle, "fasta")
         if any(fasta) == False:
-            print("This file hasn't a fasta format")
+            if(debug):
+                print("###")
+                print("## DEBUG: This file hasn't a FASTA format ##")
+                print("###")
             
         #else -> go to the parser function
         else:
-            print("***Fasta file***")
+            if(debug):
+                print("###")
+                print("## DEBUG: FASTA file format ##")
+                print("###")
             
-        return (any(fasta))
+        return(any(fasta))
 
-def is_gbk(filename):
+def is_gbk(filename, debug):
     with open(filename, "r") as handle:
         genbank = SeqIO.parse(handle, "genbank")
         if any(genbank) == False:
-            print("This file hasn't a GenBank format")
+            if(debug):
+                print("###")
+                print("## DEBUG: This file hasn't a GenBank format ##")
+                print("###")
         
-        #else -> go to the parser function
         else:
-            print("***GenBank file***")
+            if(debug):
+                print("###")
+                print("## DEBUG: FASTA file format ##")
+                print("###")
         return (any(genbank))
             
+import traceback
+
+## FIXME!!
 
 def is_gff(filename):
-    try:
-        with open(filename,"r") as handle:
+    with open(filename,"r") as handle:
+        try:
             GFF.parse(handle)
-            print("***GFF file***")
+            print("***GFF3 file***")
             return(True)
-    except:
-        print("This file hasn't a GFF format")
-        return(False)
+        except AssertionError:
+            print("This file hasn't a GFF format")
+            return(False)
 #     with open(filename, "r") as handle:
 
-    
+def is_format (filename, debug=False):
+    if is_fasta(filename, debug) == True:
+        print("***FASTA file***")
+        exit()
+    else:             
+        if is_gbk(filename, debug) == False:
+            print("Sorry this file has not any recognizable format:")
+            print(os.path.splitext(filename))
+            #Any way to show a preview?
+        else:
+            print("***GenBank file***")
+            
+
+        
 
 
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print (__doc__)
-        
-       
+        print (__doc__) 
         print ("## Usage format_checker")
         print ("python %s file\n" %sys.argv[0])
-       
-
         sys.exit()
+        
+    is_format(*sys.argv[1:], debug=True)
 
-    is_fasta(*sys.argv[1:])
-    is_gbk(*sys.argv[1:])
-    is_gff(*sys.argv[1:])
-    #is_gff(*sys.argv[1:])
+    
