@@ -14,6 +14,7 @@ import sys
 def is_fasta(filename, debug):
     with open(filename, "r") as handle:
         fasta = SeqIO.parse(handle, "fasta")
+        print(any(fasta))
         if any(fasta) == False:
             if(debug):
                 print("###")
@@ -28,6 +29,7 @@ def is_fasta(filename, debug):
                 print("###")
             
         return(any(fasta))
+    
 
 def is_gbk(filename, debug):
     with open(filename, "r") as handle:
@@ -41,7 +43,7 @@ def is_gbk(filename, debug):
         else:
             if(debug):
                 print("###")
-                print("## DEBUG: FASTA file format ##")
+                print("## DEBUG: GenBank file format ##")
                 print("###")
         return (any(genbank))
             
@@ -85,6 +87,7 @@ if __name__ == "__main__":
         print ("python %s file\n" %sys.argv[0])
         sys.exit()
         
+    #is_format(*sys.argv[1:], debug=True)
     is_format(*sys.argv[1:], debug=True)
 
     
