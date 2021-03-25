@@ -87,21 +87,23 @@ in_out_input.add_argument("-o", "--output_folder", help="Output folder.", requir
 
 parameters_input_group = subparser_input.add_argument_group("Parameters")
 parameters_input = parameters_input_group.add_mutually_exclusive_group()
-parameters_input.add_argument("--annot_file", metavar="", help="Annotation file: genbank (.gb) or GFF (.gff)")
+parameters_input.add_argument("--annot_file", metavar="", help="Annotation file: GenBank (.gbk) or GFF (.gff)")
 parameters_input.add_argument("--prot_file", metavar="", help="Protein sequence file")
 parameters_input.add_argument("--GenBank_id", metavar="", help="GenBank accession ID")
 parameters_input.add_argument("--tax_id", metavar="", help="NCBI taxonomy species accession ID")
 parameters_input.add_argument("--project", help="Folder containing a previous project information")
-
-other_parameters_input = subparser_input.add_argument_group("Other Parameters")
-other_parameters_input.add_argument("--ref_file", metavar="", help="Genome references FASTA file (.fna, .fa, .fasta)")
 
 batch_parameters_input = subparser_input.add_argument_group("Input batch options")
 batch_parameters_input.add_argument("--batch", action="store_true", help="Provide this option if input are csv files containing a samples names and paths (csv format).")
 batch_parameters_input.add_argument("--in_sample", help="File containing a list of samples to include (one per line) from input information [Default OFF].")
 batch_parameters_input.add_argument("--ex_sample", help="File containing a list of samples to exclude (one per line) from input information [Default OFF].")
 
+other_parameters_input = subparser_input.add_argument_group("Single annotation file parameters")
+other_parameters_input.add_argument("--ref_file", metavar="", help="Genome references FASTA file (.fna, .fa, .fasta)")
+other_parameters_input.add_argument("--sample_name", metavar="", help="If a single sample provided, the name to identify the sample")
+
 config_input = subparser_input.add_argument_group("Configuration")
+config_input.add_argument("--db_folder", metavar="", help="Folder to store or containing database with GenBank and RefSeq entries previously downloaded")
 config_input.add_argument("--debug", action="store_true", default=False)
 config_input.add_argument("--detached", action="store_true", help="Isolated mode. --input is a folder containing fastq reads. Provide a unique path o several using --batch option")
 

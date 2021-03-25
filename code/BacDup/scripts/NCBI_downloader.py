@@ -1,4 +1,4 @@
-#usr/bin/env python
+#!/usr/bin/env python3
 '''
 Created and modified in March 2021
 @author: Jose F. Sanchez-Herrero
@@ -13,8 +13,9 @@ import re
 import sys
 import pandas as pd
 import ncbi_genome_download as ngd
-from Bio import SeqIO
 from termcolor import colored
+
+import BacDup
 
 import HCGB
 from HCGB.functions.aesthetics_functions import debug_message
@@ -43,7 +44,7 @@ def ngd_download(acc_ID, data_folder, debug):
     if os.path.exists(dir_path):
         print ('+ Folder already exists: ', dir_path)
         ## get files download
-        (genome, prot, gff, gbk) = get_files_download(dir_path, debug)
+        (genome, prot, gff, gbk) = BacDup.scripts.functions.get_files_annotation(dir_path, debug)
         if all([genome, prot, gff, gbk]):
             download = False
         else:
@@ -100,8 +101,6 @@ def NCBI_download_list(strains2get, data_folder, Debug):
     Returns dataframe containing all samples downloaded.
     '''
 
-    ## TODO: Set threads to use in parallel
-
     ## debug messages
     if Debug:
         debug_message("******************************************")
@@ -118,9 +117,10 @@ def NCBI_download_list(strains2get, data_folder, Debug):
     ## loop through strains2get and call NCBIdownload
     database_df = pd.DataFrame()
     for acc_ID in strains2get:
+        ## TODO: Set threads to use in parallel
         HCGB.functions.aesthetics_functions.print_sepLine("+", 75, False)
         data_accID = NCBIdownload(acc_ID, data_folder, Debug)
-        data_accID = data_accID.set_index('ID')
+        data_accID = data_accID.set_index('new_name')
         database_df = database_df.append(data_accID)
 
     ## debug messages
@@ -143,38 +143,17 @@ def NCBIdownload(acc_ID, data_folder, debug):
     dir_path = ngd_download(acc_ID, data_folder, debug)
     
     ## get files download
-    (genome, prot, gff, gbk) = get_files_download(dir_path, debug)
+    (genome, prot, gff, gbk) = BacDup.scripts.functions.get_files_annotation(dir_path, debug)
 
     ## check if any plasmids downloaded
-    plasmid_count = 0
-    plasmid_id = []
+    (plasmid_count, plasmid_id) = BacDup.scripts.functions.get_plasmids(genome, debug)
+        
+    ## get information from each sample
+    (taxonomy, organism) = BacDup.scripts.functions.get_gbk_information(gbk, debug)
+    taxonomy_string = ";".join(taxonomy)
 
-    ## open
-    for seq_record in SeqIO.parse(genome, "fasta"):
-        plasmid_search = re.search(r".*plasmid.*", seq_record.description)
-        if plasmid_search:
-            plasmid_count += 1
-            name = str( seq_record.id )
-            plasmid_id.append(name)
-        
-    ## read Genbank file to retrieve information for each samle
-    ## https://biopython.org/wiki/SeqRecord
-    # get
-    for index, record in enumerate(SeqIO.parse(gbk, "genbank")):
-        
-        if (index == 0): ## only for first entry == Main chromosome
-            if debug:
-                debug_message("******************************************")
-                debug_message("SeqIO.read(gbk, 'genbank') info:", color="yellow")
-                debug_message("record", color="yellow")
-                debug_message(record, color="yellow")
-                
-            organism = record.annotations['source']
-            taxonomy = record.annotations['taxonomy']
-            taxonomy_string = ";".join(taxonomy)
-        
     ## save into dataframe
-    dataDownloaded=pd.DataFrame(columns=('ID','folder','genus','species','taxonomy','genome', 'GFF','GBK', 'proteins','plasmids_number','plasmids_ID'))
+    dataDownloaded=pd.DataFrame(columns=('new_name','folder','genus','species','taxonomy','genome', 'GFF','GBK', 'proteins','plasmids_number','plasmids_ID'))
     dataDownloaded.loc[len(dataDownloaded)] = (acc_ID, dir_path, taxonomy[-1], organism, taxonomy_string, genome, gff, prot, gbk, plasmid_count, ";".join(plasmid_id))
 
     ## return dataframe containing all information
@@ -187,40 +166,6 @@ def NCBIdownload(acc_ID, data_folder, debug):
         
     return(dataDownloaded)        
     
-##########################################################################################
-def get_files_download(folder, debug):
-    '''
-    Code retrieve from BacterialTyper database_generator.py script
-    '''
-    ## check if files are gunzip
-    files = os.listdir(folder)
-    genome=""
-    prot=""
-    gff=""
-    gbk=""
-    for f in files:
-        if f.endswith('genomic.fna'):
-            genome = os.path.join(folder, f)
-        elif f.endswith('genomic.gff'):
-            gff = os.path.join(folder, f)
-        elif f.endswith('genomic.gbk'):
-            gbk = os.path.join(folder, f)
-        elif f.endswith('genomic.gbff'):
-            gbk = os.path.join(folder, f)
-        elif f.endswith('protein.faa'):
-            prot = os.path.join(folder, f)
-
-    ## debug messages
-    if debug:
-        debug_message("-----------------------------------------")
-        debug_message("Return info get_files_download", color="yellow")
-        debug_message("genome: " + genome, color="yellow")
-        debug_message("prot: " + prot, color="yellow")
-        debug_message("gff: " + gff, color="yellow")
-        debug_message("gbk: " + gbk, color="yellow")
-
-    return(genome, prot, gff, gbk)
-
 
 ###############################################################
 def help_options():

@@ -33,10 +33,12 @@ from Bio import SeqIO
 import HCGB
 from HCGB.functions.aesthetics_functions import debug_message
 from termcolor import colored
+import pandas as pd
 
 ## my modules
-import BacDup.scripts.gbf_parser
-import BacDup.scripts.gff_parser
+import BacDup.scripts.gbf_parser as gbf_parser
+import BacDup.scripts.gff_parser as gff_parser
+import BacDup.scripts.format_checker as format_checker
 import BacDup.scripts.functions as functions
 
 ##########################
@@ -62,22 +64,46 @@ def check_annot_file(name, annot_file, Debug):
         debug_message('check_annot_file function call:', 'yellow')
         debug_message('name: ' + name, 'yellow')
         debug_message('annot_file: ' + annot_file, 'yellow')
-        debug_message('+++++++++++++++++++++++++++++++')
     
     ## check file integrity and parse appropriately
     ## file exists non-zero
     ## check format
     ## call parser
+    if (HCGB.functions.files_functions.is_non_zero_file(annot_file)):
+        format = format_checker.is_format(annot_file, Debug)
+        
+        ## debug messages
+        if (Debug):
+            debug_message('\nformat_checker.is_format function call:', 'yellow')
+            debug_message('format: ' + format, 'yellow')
+            
+        ## GenBank format
+        if (format =='gbk'):
+            print()
+            ## GBF
+            #prot_file, csv_file = gbf_parser.gbf_parser_caller(arg_dict["annot_file"], output_path, arg_dict["debug"])
     
-    #get  annot file absolute path    
-    name_file, extension = os.path.splitext(annot_file)
-    
-    ## GBF
-    #prot_file, csv_file = gbf_parser.gbf_parser_caller(arg_dict["annot_file"], output_path, arg_dict["debug"])
-    
-    ## GFF
-    #prot_file, csv_file = gff_parser.gff_parser_caller(arg_dict["annot_file"], arg_dict["ref_file"], output_path, arg_dict["debug"])
+        ## GFF format
+        elif (format =='gff'):
+            print()
+            ## GFF
+            #prot_file, csv_file = gff_parser.gff_parser_caller(arg_dict["annot_file"], arg_dict["ref_file"], output_path, arg_dict["debug"])
 
+        ## not valid via this option
+        else:
+            print()
+        
+
+    ## not accessible
+    else:
+        ## debug messages
+        if (Debug):
+            debug_message('+++++++++++++++++++++++++++++++')
+            debug_message('annot_file:', 'yellow')
+            debug_message("HCGB.functions.files_functions.is_non_zero_file returned FALSE", 'yellow')
+            
+        print (colored("\n*** ERROR: No readable or accessible file provided. Please check input ***\n", "red"))
+        exit()
 
 ##########################
 def run_input(arg_dict):
@@ -121,7 +147,6 @@ def run_input(arg_dict):
         arg_dict.project = True
         print ("+ Generate a directory containing information within the project folder provided")
         final_dir = HCGB.functions.files_functions.create_subfolder("info", outdir)
-        data_dir = HCGB.functions.files_functions.create_subfolder("data", outdir)
     
     ## debug messages
     if (arg_dict.debug):
@@ -131,7 +156,6 @@ def run_input(arg_dict):
         debug_message('arg_dict.detached: ' + str(arg_dict.detached), 'yellow')
         debug_message('arg_dict.project: ' + str(arg_dict.project), 'yellow')
         debug_message('outdir:' + outdir, 'yellow')
-        debug_message('data_dir:' + data_dir, 'yellow')
         debug_message('final_dir:' + final_dir, 'yellow')
         debug_message('+++++++++++++++++++++++++++++++')
         
@@ -152,11 +176,10 @@ def run_input(arg_dict):
     time.sleep(1)
     
     #################################################
-    ## Parse and obtain the type of input 
-    ## information provided
+    ## Parse and obtain the type of input information provided
     #################################################
-    ## TODO: Now set as mutually_exclusive group. It might be 
-    ##       to multiple options
+    ## TODO: Now set as mutually_exclusive group. It might be Set to multiple options
+    ## ATTENTION: df_accID merge generated dataframe
     
     ## --------------------------------------- ##
     ## GFF or GBF file
@@ -164,7 +187,9 @@ def run_input(arg_dict):
     if (arg_dict.annot_file):
         arg_dict.annot_file = os.path.abspath(arg_dict.annot_file) 
         
+        # *************************** ##
         ## multiple files provided
+        # *************************** ##
         if (arg_dict.batch):
             if (HCGB.functions.files_functions.is_non_zero_file(arg_dict.annot_file)):
                 
@@ -178,10 +203,6 @@ def run_input(arg_dict):
                     debug_message('dict_entries: ', 'yellow')
                     debug_message(dict_entries, 'yellow')
                     debug_message('+++++++++++++++++++++++++++++++\n\n')
-                
-                ## for each entry call check_annot_file
-                for sample, file_annot in dict_entries.items():
-                    check_annot_file(sample, file_annot, arg_dict.debug)
             else:
                 print (colored("\n*** ERROR: No readable or accessible file provided. Please check input ***\n", "red"))
                 ## debug messages
@@ -193,38 +214,119 @@ def run_input(arg_dict):
                     debug_message('+++++++++++++++++++++++++++++++\n\n')
                 exit()
             
-        ### single
+        # *************************** ##
+        ## single file provided
+        # *************************** ##
         else:
+            dict_entries = {}
             print (colored('\t* Annotation file:.......[OK]', 'green'))
-            check_annot_file(arg_dict.name, arg_dict.annot_file, arg_dict.debug)
+            if (arg_dict.sample_name):
+                sample_name =  arg_dict.sample_name
+            else:
+                sample_name = "sample"
+                
+            ##
+            dict_entries[sample_name] = arg_dict.annot_file
             
+            ## fix dataframe df_accID to match other formats
+            ## TODO
+        
+        ## create dataframe df_accID to match other formats
+        df_accID=pd.DataFrame(columns=('new_name','folder','genus','species','taxonomy','genome', 'GFF','GBK', 'proteins','plasmids_number','plasmids_ID'))
+        for name, file_annot in dict_entries.items():
+            file_annot = os.path.abspath(file_annot)
+            
+            ## init all
+            genome=""
+            prot=""
+            gff=""
+            gbk=""
+            plasmid_count = ""
+            plasmid_id = "" 
+            
+            if (arg_dict.debug):
+                debug_message('+++++++++++++++++++++++++++++++')
+                debug_message('dict_entries check annotation files provided option:', 'yellow')
+                debug_message('name: ' + name, 'yellow')
+                debug_message('file_annot: ' + file_annot, 'yellow')
+            
+            ## check file is valid
+            if (HCGB.functions.files_functions.is_non_zero_file(file_annot)):
+                format = format_checker.is_format(file_annot, arg_dict.debug)
+                if (arg_dict.debug):
+                    debug_message('format: ' + format, 'yellow')
+                
+                if (format == 'gbk'):
+                    ## get information from each sample
+                    (taxonomy, organism) = BacDup.scripts.functions.get_gbk_information(gbk, arg_dict.debug)
+                    ## plasmid_count, plasmid_id not available
+                    
+                elif (format == 'gff'):
+                    (taxonomy, organism) = ""
+                    if (arg_dict.ref_file):
+                        arg_dict.ref_file = os.path.abspath(arg_dict.ref_file)
+                        if (HCGB.functions.files_functions.is_non_zero_file(genome)):
+                            if (arg_dict.batch):
+                                ref_entries = HCGB.functions.main_functions.file2dictionary(arg_dict.ref_file, ',')
+                                genome = ref_entries[name]
+                            else:
+                                genome = arg_dict.ref_file
+                        else:
+                            ## error
+                            print (colored("\n*** ERROR: No readable or accessible reference file provided. Please check input ***\n", "red"))
+                    else:
+                        print (colored("\n*** ERROR: No genome reference file provided. Please check input help details ***\n", "red"))
+                        exit()          
+                    
+                ## save into dataframe
+                taxonomy_string = ";".join(taxonomy)
+                df_accID.loc[len(df_accID)] = (name, dir_path, taxonomy[-1], organism, taxonomy_string, genome, gff, prot, gbk, plasmid_count, ";".join(plasmid_id))
+
+            else:
+                ## debug messages
+                if (arg_dict.debug):
+                    debug_message('+++++++++++++++++++++++++++++++')
+                    debug_message('file_annot:' + file_annot, 'yellow')
+                    debug_message("HCGB.functions.files_functions.is_non_zero_file returned FALSE", 'yellow')
+                    
+                print (colored("\n*** ERROR: No readable or accessible file provided. Please check input ***\n", "red"))
+                print (file_annot)
+                exit()
+
     ## --------------------------------------- ##
     ## NCBI RefSeq/Genbank IDs: GCA_XXXXXXXX.1; GCF_XXXXXXXXX.1
     ## --------------------------------------- ##
     elif (arg_dict.GenBank_id):
+        if (arg_dict.db_folder):
+            db_folder = HCGB.functions.files_functions.create_folder(os.path.abspath(arg_dict.db_folder))
+        else:
+            db_folder = HCGB.functions.files_functions.create_subfolder("db", outdir)
+
+        # *************************** ##
         ## file with multiple
+        # *************************** ##
         if (arg_dict.batch):
             arg_dict.GenBank_id = os.path.abspath(arg_dict.GenBank_id)
             
-            ## check
+            ## check is a file and readable
             if (HCGB.functions.files_functions.is_non_zero_file(arg_dict.GenBank_id)):
                 print (colored('\t* Multiple NCBI GenBank IDs in a file .......[OK]', 'green'))
-                
+                print()
+            
                 ## call IDs into a list and create tmp folder
                 strains2get = HCGB.functions.main_functions.readList_fromFile(arg_dict.GenBank_id)
-                tmp_folder = HCGB.functions.files_functions.create_subfolder("tmp", outdir)
                 
                 ## debug messages
                 if (arg_dict.debug):
                     debug_message('+++++++++++++++++++++++++++++++')
                     debug_message('Multiple NCBI GenBank IDs provided option:', 'yellow')
                     debug_message('arg_dict.GenBank_id: ' + arg_dict.GenBank_id, 'yellow')
-                    debug_message('strains2get: ' + strains2get, 'yellow')
-                    debug_message('tmp_folder: ' + tmp_folder, 'yellow')
+                    debug_message('strains2get: ' + str(strains2get), 'yellow')
+                    debug_message('db_folder: ' + db_folder, 'yellow')
                     debug_message('+++++++++++++++++++++++++++++++')
                 
                 ## call NCBI_downloader
-                data_accID = BacDup.scripts.NCBI_downloader.NCBI_download_list(strains2get, tmp_folder, arg_dict.debug)
+                df_accID = BacDup.scripts.NCBI_downloader.NCBI_download_list(strains2get, db_folder, arg_dict.debug)
                 
             else:
                 print (colored("\n*** ERROR: No readable or accessible file provided. Please check input ***\n", "red"))
@@ -236,12 +338,23 @@ def run_input(arg_dict):
                     debug_message("HCGB.functions.files_functions.is_non_zero_file returned FALSE", 'yellow')
                     debug_message('+++++++++++++++++++++++++++++++\n\n')
                 exit()
-        
+
+        # *************************** ##
         ## single GenBank ID
+        # *************************** ##
         else:
+            if (arg_dict.debug):
+                debug_message('+++++++++++++++++++++++++++++++')
+                debug_message('Single NCBI GenBank IDs provided option:', 'yellow')
+                debug_message('arg_dict.GenBank_id: ' + arg_dict.GenBank_id, 'yellow')
+                debug_message('db_folder: ' + db_folder, 'yellow')
+                debug_message('+++++++++++++++++++++++++++++++')
+            
+            ## download
             print (colored('\t* A NCBI GenBank ID:.......[OK]', 'green'))
+            print()
             HCGB.functions.aesthetics_functions.print_sepLine("+", 75, False)
-            data_accID = NCBIdownload(acc_ID, data_folder, Debug)
+            df_accID = BacDup.scripts.NCBI_downloader.NCBIdownload(arg_dict.GenBank_id, db_folder, arg_dict.debug)
     
     ## --------------------------------------- ##
     ## NCBI Taxonomy ID: 
@@ -251,11 +364,32 @@ def run_input(arg_dict):
             print (colored('\t* Multiple NCBI Taxonomy IDs in a file .......[OK]', 'green')) 
         else:
             print (colored('\t* A NCBI Taxonomy ID:.......[OK]', 'green'))
+            
+        ## create df_accID to store data
+        
 
     ## --------------------------------------- ##
     ## Previous BacDup analysis folder
     ## --------------------------------------- ##
     elif (arg_dict.project):
         print (colored('\t* A previous BacDup analysis project folder:.......[OK]', 'green'))
+    
+        ## create df_accID to store data
+    
+    
+    ### Parse df_accID
+    dict_input_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, df_accID, "input", arg_dict.debug)
+
+    ## parse each sample retrieved
+    for sample, folder_input in dict_input_folders.items():
+        ## TODO: Set threads to use in parallel
+        print(sample)
+        check_annot_file(sample, df_accID, arg_dict.debug)
+
+    
+    
+    
+    
+    
     
     exit()
