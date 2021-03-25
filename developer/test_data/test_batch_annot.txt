@@ -1,0 +1,2 @@
+example1,example_NCBI/example1_genomic.gbff
+denovo,example_denovo/example_annot.gff

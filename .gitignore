@@ -17,6 +17,6 @@ code/dist/
 code/.pypirc
 
 ## test
-code/test
+developer/test
 /.metadata/
 
