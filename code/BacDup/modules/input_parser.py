@@ -3,6 +3,7 @@
 ## Jose F. Sanchez & Alba Moya                              ##
 ## Copyright (C) 2020-2021                                  ##
 ##############################################################
+import BacDup
 '''
 Created on 25 oct. 2020
 @author: alba
@@ -34,6 +35,8 @@ import HCGB
 from HCGB.functions.aesthetics_functions import debug_message
 from termcolor import colored
 import pandas as pd
+
+import BacDup
 
 ## my modules
 import BacDup.scripts.gbf_parser as gbf_parser
@@ -253,6 +256,7 @@ def run_input(arg_dict):
             ## check file is valid
             if (HCGB.functions.files_functions.is_non_zero_file(file_annot)):
                 format = format_checker.is_format(file_annot, arg_dict.debug)
+                
                 if (arg_dict.debug):
                     debug_message('format: ' + format, 'yellow')
                 

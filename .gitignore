@@ -18,5 +18,6 @@ code/.pypirc
 
 ## test
 developer/test
+developer/test_ncbi_donwload/
 /.metadata/
 

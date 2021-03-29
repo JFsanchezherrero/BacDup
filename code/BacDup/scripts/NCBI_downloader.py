@@ -185,7 +185,7 @@ def help_options():
 def main():
     ## this code runs when call as a single script
 
-      ## control if options provided or help
+    ## control if options provided or help
     if len(sys.argv) > 1:
         print ("")
     else:

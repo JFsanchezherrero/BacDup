@@ -10,3 +10,5 @@ pytz
 six
 wget
 ncbi-genome-download
+ete3
+six
