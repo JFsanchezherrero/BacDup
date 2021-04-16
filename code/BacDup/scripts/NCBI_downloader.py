@@ -20,7 +20,14 @@ import HCGB
 from HCGB.functions.aesthetics_functions import debug_message
 
 ###############################################################
-def ngd_download(acc_ID, data_folder, debug, section='genbank', assembly_level='complete', group_given='bacteria'):
+def get_section(acc_ID, debug):
+    if (acc_ID.startswith("GCA")):
+        return('genbank')
+    else:
+        return('refseq')
+
+###############################################################
+def ngd_download(section_given, acc_ID, data_folder, debug, section='genbank', assembly_level='complete', group_given='bacteria'):
     '''
     Function that calls and retrieves data from NCBI using python package ngd.
     
@@ -36,10 +43,7 @@ def ngd_download(acc_ID, data_folder, debug, section='genbank', assembly_level='
     
     ## get path
     print ('+ Check data for ID: ', acc_ID)
-    if (acc_ID.startswith("GCA")):
-        dir_path = os.path.join(data_folder, 'genbank', group_given, acc_ID)
-    else:
-        dir_path = os.path.join(data_folder, 'refseq', group_given, acc_ID)
+    dir_path = os.path.join(data_folder, section_given, group_given, acc_ID)
     
     ## check if previously download
     download = False
@@ -63,33 +67,24 @@ def ngd_download(acc_ID, data_folder, debug, section='genbank', assembly_level='
         if (debug):
             debug_message("ngd.download call", color="yellow")
             debug_message("dir_path: " + dir_path, color="yellow")
+            debug_message("section_given: " + section_given, color="yellow")
             
         ## download
+        if debug:
+            debug_message("section='%s', file_formats='genbank', assembly_level=%s, assembly_accessions=%s, output=%s, groups=%s" %(section_given, assembly_level, acc_ID, data_folder, group_given), color="yellow")
         
-        ## check if genbank (GCA_.*) or refseq ID (GCF_.*)
-        if (acc_ID.startswith("GCA")):
-            if debug:
-                debug_message("section='genbank', file_formats='genbank', assembly_level=%s, assembly_accessions=%s, output=%s, groups=%s" %(assembly_level, acc_ID, data_folder, group_given), color="yellow")
+        try:
+            ngd.download(section=section_given, file_formats='genbank', 
+                     assembly_levels=assembly_level,
+                     assembly_accessions=acc_ID, output=data_folder, groups=group_given)
+        except:
+            raise ("A problem occurred when contacting NCBI for downloading id (%s) from %s" %(acc_ID, section_given))
             
-            try:
-                ngd.download(section='genbank', file_formats='genbank', 
-                         assembly_levels=assembly_level,
-                         assembly_accessions=acc_ID, output=data_folder, groups=group_given)
-            except:
-                raise ("A problem occurred when contacting NCBI for downloading id (%s) from %s" %(acc_ID, 'genbank'))
-                
-                
-        else:
-            if debug:
-                debug_message("section='refseq', file_formats='genbank', assembly_level=%s, assembly_accessions=%s, output=%s, groups=%s" %(assembly_level, acc_ID, data_folder, group_given), color="yellow")
         
-            try:
-                ngd.download(section='refseq', file_formats='genbank', 
-                        assembly_levels=assembly_level,
-                        assembly_accessions=acc_ID, output=data_folder, groups=group_given)
-            except:
-                raise ("A problem occurred when contacting NCBI for downloading id (%s) from %s" %(acc_ID, 'refseq'))
-            
+        ## return empty
+        if not os.path.isdir(dir_path):
+            return False
+    
         ## check if files are gunzip
         files = os.listdir(dir_path)
         files_list = []        
@@ -109,12 +104,12 @@ def ngd_download(acc_ID, data_folder, debug, section='genbank', assembly_level='
     return (dir_path)
 
 ###############################################################
-def NCBI_download_list(strains2get, data_folder, Debug, assembly_level, group_given):
+def NCBI_download_list(strains2get, data_folder, Debug, assembly_level):
     '''
     Function to call ngd_download function given a list of IDs.
     Returns dataframe containing all samples downloaded.
     '''
-
+    
     ## debug messages
     if Debug:
         debug_message("******************************************")
@@ -133,7 +128,7 @@ def NCBI_download_list(strains2get, data_folder, Debug, assembly_level, group_gi
     for acc_ID in strains2get:
         ## TODO: Set threads to use in parallel
         HCGB.functions.aesthetics_functions.print_sepLine("+", 75, False)
-        data_accID = NCBIdownload(acc_ID, data_folder, Debug, assembly_level, group=group_given)
+        data_accID = NCBIdownload(acc_ID, data_folder, Debug, assembly_level)
         data_accID = data_accID.set_index('new_name')
         database_df = database_df.append(data_accID)
 
@@ -149,12 +144,26 @@ def NCBI_download_list(strains2get, data_folder, Debug, assembly_level, group_gi
     return(database_df)
 
 ##########################################################################################
-def NCBIdownload(acc_ID, data_folder, debug, assembly_level, group='bacteria'):    
+def NCBIdownload(acc_ID, data_folder, debug, assembly_level='complete', group='bacteria'):    
     '''
     Code retrieve from BacterialTyper database_generator.py script
     '''
-    ## module ngd requires to download data in bacteria subfolder under genbank folder
-    dir_path = ngd_download(acc_ID, data_folder, debug, assembly_level=assembly_level, group_given=group)
+    ## module ngd requires to download data in bacteria/archaea subfolder under genbank/refseq folder
+    ## get details
+    section_given = get_section(acc_ID, debug)
+    group_accID = NCBI_get_info_GenbankID(data_folder, acc_ID, debug)
+    
+    ## save into dataframe
+    dataDownloaded=pd.DataFrame(columns=('new_name','folder','genus','species','taxonomy','genome', 'annot_file','format_annot_file', 'proteins','plasmids_number','plasmids_ID'))
+        
+    
+    ## download accID
+    dir_path = ngd_download(section_given, acc_ID, data_folder, debug, assembly_level=assembly_level, group_given=group_accID)
+    
+    ## return empty
+    if not os.path.isdir(dir_path):
+        dataDownloaded.loc[len(dataDownloaded)] = (acc_ID, '', '', '', '', '', '', '', '', '', '')
+        return(dataDownloaded)
     
     ## get files download
     (genome, prot, gff, gbk) = BacDup.scripts.functions.get_files_annotation(dir_path, debug)
@@ -167,8 +176,7 @@ def NCBIdownload(acc_ID, data_folder, debug, assembly_level, group='bacteria'):
     taxonomy_string = ";".join(taxonomy)
 
     ## save into dataframe
-    dataDownloaded=pd.DataFrame(columns=('new_name','folder','genus','species','taxonomy','genome', 'GFF','GBK', 'proteins','plasmids_number','plasmids_ID'))
-    dataDownloaded.loc[len(dataDownloaded)] = (acc_ID, dir_path, taxonomy[-1], organism, taxonomy_string, genome, gff, prot, gbk, plasmid_count, ";".join(plasmid_id))
+    dataDownloaded.loc[acc_ID] = (acc_ID, dir_path, taxonomy[-1], organism, taxonomy_string, genome, gbk, 'gbk', prot, plasmid_count, ";".join(plasmid_id))
 
     ## return dataframe containing all information
     if debug:
@@ -226,7 +234,46 @@ def NCBI_get_info(section_given, data_folder, tax_ID_list, debug, assembly_level
         
     ## return
     return(dict_entries)
+
+###############################################################
+def NCBI_get_info_GenbankID(data_folder, acc_ID, debug, assembly_level_given ='complete'):
+
+    section_given = get_section(acc_ID, debug)
+
+    ## import module and class
+    import ncbi_genome_download
+    from ncbi_genome_download.config import NgdConfig
     
+    ## blinded NCBI search
+    try:
+        ## bacteria
+        ngd_config = NgdConfig.from_kwargs(section=section_given, 
+                     file_formats='genbank',
+                     assembly_accessions=acc_ID,
+                     output=data_folder,
+                     dry_run=True, 
+                     groups='bacteria')
+        info = ncbi_genome_download.core.select_candidates(ngd_config)
+        return('bacteria')
+        
+    except:
+        ## archaea
+        try:
+            ngd_config = NgdConfig.from_kwargs(section=section_given, 
+                     file_formats='genbank',
+                     assembly_accessions=acc_ID,
+                     output=data_folder,
+                     dry_run=True, 
+                     groups='archaea')
+            
+            info = ncbi_genome_download.core.select_candidates(ngd_config)
+            return('archaea')
+        
+        except:
+            raise "**** ERROR: Something happen while connecting to NCBI... ***"
+            exit()
+            return (False)
+
 ###############################################################
 def help_options():
     print ("\nUSAGE: python %s ID_file folder Debug[True/False]\n"  %os.path.realpath(__file__))

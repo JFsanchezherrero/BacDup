@@ -7,12 +7,21 @@ from HCGB.functions.aesthetics_functions import debug_message
 from Bio import SeqIO
 
 ##########################################################################################
-def file_readable_check(file_given):
+def file_readable_check(file_given, non_exit=False):
+    '''Check file exists and it is ok.
+    
+    This function checks if file exists and is readable. If not OK by default exits, but if option
+    non_exit=True provided, it returns false.
+     
+    '''
     if (HCGB.functions.files_functions.is_non_zero_file(file_given)):
         return True
     else:
         print (colored("\n*** ERROR: No readable or accessible file provided. Please check input: ***\n " + file_given, "red"))
-        exit()
+        if non_exit:
+            return (False)
+        else:
+            exit()
         
 ##########################################################################################
 def get_gbk_information(gbk, debug):

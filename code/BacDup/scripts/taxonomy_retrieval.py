@@ -313,6 +313,7 @@ def taxon_info(taxid, ncbi, debug):
         print ("No valid tax id provided: " + str(taxid))
         exit()
 
+
 ######################################################################
 def get_superKingdom(tax_id, ncbi, debug):
     """For a given tax_id get superkingdom from NCBI taxonomy ID
