@@ -6,7 +6,14 @@ import re
 from HCGB.functions.aesthetics_functions import debug_message
 from Bio import SeqIO
 
-
+##########################################################################################
+def file_readable_check(file_given):
+    if (HCGB.functions.files_functions.is_non_zero_file(file_given)):
+        return True
+    else:
+        print (colored("\n*** ERROR: No readable or accessible file provided. Please check input: ***\n " + file_given, "red"))
+        exit()
+        
 ##########################################################################################
 def get_gbk_information(gbk, debug):
     ## read Genbank file to retrieve information for each samle
@@ -67,13 +74,17 @@ def get_plasmids(genome, Debug):
     Parses genome fasta file and retrieves plasmid sequences IDs        
     """
 
-    plasmid_id = []
-    for seq_record in SeqIO.parse(genome, "fasta"):
-        plasmid_search = re.search(r".*plasmid.*", seq_record.description)
-        if plasmid_search:
-            name = str( seq_record.id )
-            plasmid_id.append(name)
     
+    if (HCGB.functions.files_functions.is_non_zero_file(genome)):
+        plasmid_id = []
+        for seq_record in SeqIO.parse(genome, "fasta"):
+            plasmid_search = re.search(r".*plasmid.*", seq_record.description)
+            if plasmid_search:
+                name = str( seq_record.id )
+                plasmid_id.extend(name)
+    else:
+        plasmid_id = []
+          
     ##
     return(len(plasmid_id), plasmid_id)
     

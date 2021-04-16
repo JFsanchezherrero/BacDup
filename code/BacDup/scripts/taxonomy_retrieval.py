@@ -25,14 +25,47 @@ import HCGB
 from termcolor import colored
 import random
 
+from BacDup.scripts.NCBI_downloader import NCBI_get_info
+
 ## conda install -c etetoolkit ete3 ete_toolchain
 
 ######################################################################
 def parse_taxid(tax_id, ncbi, option, debug):
+    """Function to parse according to option: provide info or return unravelled data    
+    """
+    ############
+    ## debug messages
+    ############
+    if debug:
+        debug_message('parse_taxid:', "yellow")
+        if tax_id.isdigit():
+            debug_message('tax_id: ' + str(tax_id), "yellow")
+        else:
+            debug_message('tax_id: ' + tax_id, "yellow")
+            debug_message('conversion needed: ', "yellow")
+             
+        debug_message('option: ' + option, "yellow")
+    
+    ############
+    ## convert to tax ID
+    ############
+    if not tax_id.isdigit():
+        ## convert name to taxid integer
+        print ("+ Convert to NCBI taxonomy ID")
+        print ("\tSource: " + tax_id)
+        tax_id = name2taxid([tax_id], ncbi)
+        (tax_name, taxid, rank, lineage) = taxon_info(tax_id, ncbi, debug)
+        print ("\tRank: " + rank)
+        print ("\tID: " + str(taxid))
+        
+    ############
+    ## parse accordingly
+    ############
     if (option=="info"):
         print()
         (tax_name, taxid, rank, lineage) = taxon_info(tax_id, ncbi, debug)
         
+        print ("----------------------------------------------")
         print ("Result:")
         print ("Name: " + tax_name)
         print ("Rank: " + rank)
@@ -44,22 +77,93 @@ def parse_taxid(tax_id, ncbi, option, debug):
             tax_split = tax.split(":")
             print ("\t" + '{}\t{}'.format(tax_split[0], tax_split[1])) 
         
+        print ("----------------------------------------------")
+        print ()
+        
         ## return info
         return (tax_name, taxid, rank, lineage)
         
-        
+    ############
+    ### call unravel taxid information
+    ############
     elif (option=="unravel"):
-        info = unravel_taxid(tax_id, ncbi, debug)
-        return info
+        return(unravel_taxid(tax_id, ncbi, debug))
+        
+###########################################################################
+def get_GenBank_ids(data_folder, taxID_list, random_k, debug, assembly_level_given='complete', group_given='bacteria', section_given='genbank'):
+    '''
+    This function retrieves information from GenBank for the taxids provided
+    using ncbi_genome_download module in NCBI_downloader script
+    
+    :param data_folder: Database folder containing entries
+    :param taxID_list: List of taxids to retrieve
+    :param random_k: Number of entries to randomly select. Provide -1 for all entries.
+    :param debug: True/False for debugging messages
+    :param assembly_level_given: Either complete, scaffold, chromosome or all.
+    :param group_given: Either bacteria, archaea, virus or eukarya
+    
+    :type data_folder: str
+    :type taxID_list: list
+    :type random_k: int
+    :type debug: bool
+    :type assembly_level_given: str
+    :type group_given: str
+    
+    :return dict
+    '''
+
+    len_list = len(taxID_list)
+
+    ## debug messages
+    if debug:
+        debug_message('get_GenBank_ids:', "yellow")
+        debug_message('taxID_list: %s items' %len_list, "yellow")
+        print (taxID_list)
+        debug_message('group: ' + group_given, "yellow")
+        debug_message('assembly level: ' + assembly_level_given, "yellow")
+        debug_message('selection: ' + str(random_k), "yellow")
+        
+        
+    ## retrieve NCBI GenBanks ids with com
+    dict_entries = NCBI_get_info(section_given, data_folder, taxID_list, debug, assembly_level_given, group_given)
+    dict_entries_len = len(list(dict_entries.keys()))
+    
+    ##
+    if random_k<0:
+        list_entries = list(dict_entries.keys())
+        print ('All %s entries selected' %dict_entries_len)
+    
+    else:
+        print ("Selecting random entries retrieved:")
+        list_entries = random.choices(list(dict_entries.keys()), k=random_k)
+        print ('%s entries selected out of %s' %(str(random_k), str(dict_entries_len)))
+    
+    ## debug messages
+    if debug:        
+        debug_message('list_entries:', "yellow")
+        print (list_entries)
+        debug_message("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        
+    ##
+    return(list_entries)
+
 
 ######################################################################
 def unravel_taxid(tax_id, ncbi, debug):
+    """This function unravels information and obtains children taxids for each taxid.
+    
+    If taxid corresponds to serotype or species, no further processing is done. On the 
+    other hand, if genes, family, order or any other rank is provided, all subranks would 
+    retrieved. It also takes into account serotypes and accomodates information.
+    
+    It returns a list of all taxids included within the tax_id provided.
+    """
     
     ## check the rank provided    
     (tax_name, taxid, rank, lineage) = taxon_info(tax_id, ncbi, debug)
     
+    ## debug messages
     if debug:
-        debug_message("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
         debug_message('tax_name: '+ tax_name, "yellow")
         debug_message('taxid:' + str(taxid) , "yellow")
         debug_message('rank: ' + rank, "yellow")
@@ -67,18 +171,31 @@ def unravel_taxid(tax_id, ncbi, debug):
     
     ##
     list_taxids = []
-    list_lineage = lineage.split(";")
-    for tax in list_lineage:
-        tax_split = tax.split(":")
-        ## check the rank provided    
-        (tax_name2, taxid2, rank2, lineage2) = taxon_info(tax_split[0], ncbi, debug)
-        if (rank2 == "species"):
-            list_taxids.append(taxid2)
-        elif (rank2 == "serotype"):
-            list_taxids.append(taxid2)
+    
+    ## taxid provided is either a serotype or strain: directly to retrieve
+    if (rank in ("species", "serotype", "strain")):
+        list_taxids.append(taxid)
+    else:
+        
+        ## get descendant
+        dict_descent = desc_taxa(taxid, ncbi, debug)
+        for tax, name in dict_descent.items():
             
-    return (list_taxids)   
-
+            ## add taxa retrieved
+            list_taxids.append(tax)
+            
+            ## check the rank provided and decompose    
+            (tax_name2, taxid2, rank2, lineage2) = taxon_info(tax, ncbi, debug)
+            list_lineage = lineage2.split(";")
+            for tax3 in list_lineage:
+                tax_split = tax3.split(":")
+                ## check the rank provided: add also species or serotype
+                (tax_name3, taxid3, rank3, lineage3) = taxon_info(tax_split[0], ncbi, debug)
+                if (rank3 in ("species", "serotype")):
+                    list_taxids.append(taxid3)
+            
+    ## return uniq list of ids
+    return (list(set(list_taxids)))
         
 ######################################################################
 def init_db_object(debug):
@@ -148,13 +265,18 @@ def update_db(ncbi_db, db_folder, debug):
     return ncbi_db
 
 ######################################################################
-def desc_taxa(taxid, ncbi, outFH):
+def desc_taxa(taxid, ncbi, debug):
     """Write descendent taxa for taxid
     Created by Joe R. J. Healey; Nick Youngblut
     Slightly modified. 
     
     Returns python dictionary with descendant taxid and name.
     """
+    ## debug messages
+    if debug:
+        debug_message("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        debug_message('desc_taxa: '+ str(taxid), "yellow")
+    
     # Main feature of the script is to get all taxa within a given group.    
     descendent_taxa = ncbi.get_descendant_taxa(taxid)
     descendent_taxa_names = ncbi.translate_to_names(descendent_taxa)
@@ -162,6 +284,12 @@ def desc_taxa(taxid, ncbi, outFH):
     dict_Descent = {}
     for dtn, dt in zip(descendent_taxa_names, descendent_taxa):
         dict_Descent[dt] = dtn
+    
+    ## debug messages
+    if debug:
+        debug_message('dict_Descent: ', "yellow")
+        print (dict_Descent)
+        debug_message("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     
     return dict_Descent
 
@@ -184,7 +312,24 @@ def taxon_info(taxid, ncbi, debug):
         print (colored("** ERROR: ", 'red'))
         print ("No valid tax id provided: " + str(taxid))
         exit()
-        return("", "", "", "")
+
+######################################################################
+def get_superKingdom(tax_id, ncbi, debug):
+    """For a given tax_id get superkingdom from NCBI taxonomy ID
+    """
+    
+    if debug:
+        debug_message("get_superKingdom: ", 'yellow')
+        debug_message("tax_id: " + str(tax_id), 'yellow')
+    
+    (tax_name2, taxid2, rank2, lineage2) = taxon_info(tax_id, ncbi, debug)
+    list_lineage = lineage2.split(";")
+    for tax3 in list_lineage:
+        tax_split = tax3.split(":")
+        ## check the rank provided: add also species or serotype
+        (tax_name3, taxid3, rank3, lineage3) = taxon_info(tax_split[0], ncbi, debug)
+        if (rank3 == "superkingdom"):
+            return (tax_name3.lower())
 
 ######################################################################
 def name2taxid(taxids, ncbi):
@@ -194,8 +339,7 @@ def name2taxid(taxids, ncbi):
     """
     
     # If names were provided in taxid list, convert to taxids
-    #args.taxid = args.taxid.replace('"', '').replace("'", '').split(',')
-    #args.taxid = name2taxid(args.taxid, ncbi)
+    #taxids = taxids.replace('"', '').replace("'", '').split(',')
     
     new_taxids = []
     for taxid in taxids:
@@ -205,10 +349,11 @@ def name2taxid(taxids, ncbi):
             try:
                 new_taxids.append(int(taxid))
             except ValueError:
-                msg = 'Error: cannot convert to taxid: {}'
-                raise ValueError(msg.format(taxid))
+                print ()
+                print (colored("** ERROR: Cannot convert to taxid: " + taxid, 'red'))
+                exit()
 
-    return new_taxids
+    return new_taxids[0]
 
 ######################################################################
 def help_options():
@@ -226,10 +371,21 @@ def main():
         exit()
     
     ## get arguments provided
-    taxid = sys.argv[1]
-    option = sys.argv[2]
+    db = sys.argv[1]
+    taxid = sys.argv[2]
+    option = sys.argv[3]
     debug=True
-    
+
+    ## print
+    if debug:
+        debug_message('arguments\n', "yellow")
+        debug_message('db:' + db, "yellow")
+        if taxid.isdigit():
+            debug_message('taxid: ' + str(taxid) , "yellow")
+        else:
+            debug_message('taxid: ' + taxid, "yellow")
+        debug_message('option:' + option, "yellow")
+
     ## init database
     ncbi = init_db_object(debug)
     
@@ -244,18 +400,14 @@ def main():
         
     print ("+ ------------------------------------- +\n\n")
 
-    ## header
-    # taxon_info: ['name', 'taxid', 'rank', 'lineage']
-    # else:
-    # ['parent_taxid', 'descendent_taxid','descendent_name']
-    
-    ## body
-    #for taxid in args.taxid:
-    #    if args.taxon_info:
-    #        taxon_info(taxid, ncbi, outFH)
-    #    else:
-    #        desc_taxa(taxid, ncbi,  outFH, args.just_taxids)
-            
+    string_info = [str(int) for int in info]
+    #HCGB.functions.main_functions.printList2file("./out_file.txt", string_info)
+
+    if option == 'unravel':
+        ## assuming all belong to same superkingdom
+        group_obtained = get_superKingdom(string_info[0], ncbi, debug)
+        
+        dict_entries = get_GenBank_ids(db, string_info, 10, debug, group_given=group_obtained)
     
 ############################################################
 if __name__== "__main__":

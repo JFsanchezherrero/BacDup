@@ -69,12 +69,10 @@ def is_format (filename, debug=False):
             if debug:
                 print("## DEBUG: fasta protein ##")
             return str("fasta protein")
-        exit()
     elif is_gbk(filename, debug):
         if debug:
             print("## DEBUG: gbk ##")
-        return str("fasta")
-        exit()
+        return str("gbk")
         
     else:
         print("## DEBUG: Sorry this file has not any recognizable format:")
