@@ -154,8 +154,7 @@ def NCBIdownload(acc_ID, data_folder, debug, assembly_level='complete', group='b
     group_accID = NCBI_get_info_GenbankID(data_folder, acc_ID, debug)
     
     ## save into dataframe
-    dataDownloaded=pd.DataFrame(columns=('new_name','folder','genus','species','taxonomy','genome', 'annot_file','format_annot_file', 'proteins','plasmids_number','plasmids_ID'))
-        
+    dataDownloaded=pd.DataFrame(columns=(BacDup.scripts.functions.columns_accID_table()))
     
     ## download accID
     dir_path = ngd_download(section_given, acc_ID, data_folder, debug, assembly_level=assembly_level, group_given=group_accID)
