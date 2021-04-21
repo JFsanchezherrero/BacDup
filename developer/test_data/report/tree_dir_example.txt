@@ -1,0 +1,37 @@
+test_results/
+├── data
+│   ├── GCA_000027125.1
+│   │   ├── input
+│   │   │   ├── .success
+│   │   │   ├── GCA_000027125.1_ASM2712v1_genomic.gbff -> ##SYMBOLIC LINK TO ORIGINAL FILE
+│   │   │   └── info.csv
+│   │   └── parse
+│   │       ├── .success
+│   │       ├── annot_df.csv
+│   │       ├── length_df.csv
+│   │       └── proteins.fa
+│   ├── GCF_000026245.1
+│   │   ├── input
+│   │   │   ├── .success
+│   │   │   ├── GCF_000026245.1_ASM2624v1_genomic.gbff -> ##SYMBOLIC LINK TO ORIGINAL FILE
+│   │   │   └── info.csv
+│   │   └── parse
+│   │       ├── .success
+│   │       ├── annot_df.csv
+│   │       ├── length_df.csv
+│   │       └── proteins.fa
+│   └── GCF_000299455.1
+│       ├── input
+│       │   ├── .success
+│       │   ├── GCF_000299455.1_ASM29945v1_genomic.gbff -> ##SYMBOLIC LINK TO ORIGINAL FILE
+│       │   └── info.csv
+│       └── parse
+│           ├── .success
+│           ├── annot_df.csv
+│           ├── length_df.csv
+│           └── proteins.fa
+├── info
+└── report
+    └── input
+        └── info.csv
+
