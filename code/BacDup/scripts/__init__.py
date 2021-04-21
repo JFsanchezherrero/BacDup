@@ -7,7 +7,8 @@ __all__ = [
     'gff_parser',
     'NCBI_downloader',
     'functions',
-    'format_checker'
+    'format_checker',
+    'dup_searcher'
 ]
 
 from BacDup.scripts import *

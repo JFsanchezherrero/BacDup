@@ -7,6 +7,14 @@ from HCGB.functions.aesthetics_functions import debug_message
 from Bio import SeqIO
 
 ################################################################################
+def columns_rawBLAST_table():
+    '''Set the columns to include in a BLAST tabular file'''
+    columns = ["qseqid", "sseqid", "pident", "length",
+           "mismatch", "gapopen", "qstart", "qend",
+           "sstart", "send", "evalue", "bitscore", "qlen", "slen"]
+    return(columns)
+
+################################################################################
 def columns_accID_table():
     '''Set the columns to include in the accID dataframe'''
     columns= ['new_name','folder','genus','species','taxonomy','genome',
