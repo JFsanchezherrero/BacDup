@@ -129,7 +129,6 @@ def NCBI_download_list(strains2get, data_folder, Debug, assembly_level):
         ## TODO: Set threads to use in parallel
         HCGB.functions.aesthetics_functions.print_sepLine("+", 75, False)
         data_accID = NCBIdownload(acc_ID, data_folder, Debug, assembly_level)
-        data_accID = data_accID.set_index('new_name')
         database_df = database_df.append(data_accID)
 
     ## debug messages
@@ -175,7 +174,7 @@ def NCBIdownload(acc_ID, data_folder, debug, assembly_level='complete', group='b
     taxonomy_string = ";".join(taxonomy)
 
     ## save into dataframe
-    dataDownloaded.loc[acc_ID] = (acc_ID, dir_path, taxonomy[-1], organism, taxonomy_string, genome, gbk, 'gbk', prot, plasmid_count, ";".join(plasmid_id))
+    dataDownloaded.loc[len(dataDownloaded)] = (acc_ID, dir_path, taxonomy[-1], organism, taxonomy_string, genome, gbk, 'gbk', prot, plasmid_count, ";".join(plasmid_id))
 
     ## return dataframe containing all information
     if debug:

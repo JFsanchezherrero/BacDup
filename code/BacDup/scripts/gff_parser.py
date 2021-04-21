@@ -37,20 +37,24 @@ def gff_parser_caller(gff_file, ref_file, output_path, debug):
     csv_length = os.path.abspath( os.path.join(output_path, 'length_df.csv'))
     list_out_files = [prot_file, csv_file, csv_length]
     
-    with open (ref_file) as in_handle:
-        ref_recs = SeqIO.to_dict(SeqIO.parse(in_handle, "fasta"))
+    try:
+        with open (ref_file) as in_handle:
+            ref_recs = SeqIO.to_dict(SeqIO.parse(in_handle, "fasta"))
+        
+        ## debug messages     
+        if (debug):
+            debug_message('GenBank record', 'yellow')
+            print (ref_recs)
     
-    ## debug messages     
-    if (debug):
-        debug_message('GenBank record', 'yellow')
-        print (ref_recs)
+        ## parse
+        with open(prot_file, "w") as out_handle:
+            SeqIO.write(protein_recs(gff_file, ref_recs, list_out_files, debug=debug), out_handle, "fasta")
+        
+        ## return information
+        return (list_out_files)
 
-    ## parse
-    with open(prot_file, "w") as out_handle:
-        SeqIO.write(protein_recs(gff_file, ref_recs, list_out_files, debug=debug), out_handle, "fasta")
-    
-    ## return information
-    return (list_out_files)
+    except:
+        return (False)
 
 ############################################################       
 def protein_recs(gff_file, ref_recs, list_out_files, debug=False):

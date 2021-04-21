@@ -33,13 +33,16 @@ def gbf_parser_caller(annot_file, output_path, debug):
     csv_length = os.path.abspath( os.path.join(output_path, 'length_df.csv'))
     list_out_files = [prot_file, csv_file, csv_length]
     
-    with open(prot_file, "w") as output_handle:
-        SeqIO.write(
-            gbf_parser(annot_file, list_out_files, debug=debug), 
-            output_handle, "fasta")
-
-    ## output files    
-    return (list_out_files)
+    try:
+        with open(prot_file, "w") as output_handle:
+            SeqIO.write(
+                gbf_parser(annot_file, list_out_files, debug=debug), 
+                output_handle, "fasta")
+    
+        ## output files    
+        return (list_out_files)
+    except:
+        return (False)
     
 ################################################################################
 def gbf_parser(gbf_file, list_out_files, debug=False):

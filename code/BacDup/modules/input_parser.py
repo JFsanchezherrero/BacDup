@@ -21,6 +21,7 @@ import time
 from Bio import SeqIO
 import HCGB
 from HCGB.functions.aesthetics_functions import debug_message
+import HCGB.functions.time_functions as time_functions
 from termcolor import colored
 import pandas as pd
 
@@ -193,7 +194,7 @@ def parse_options(arg_dict):
                 genus = taxonomy[-1]
                 taxonomy_string = ";".join(taxonomy)
                 
-            dir_path = os.path.abspath(file_annot)
+            dir_path = os.path.abspath(os.path.dirname(file_annot))
             df_accID.loc[len(df_accID)] = (name, dir_path, genus, organism, taxonomy_string, genome, 
                                            file_annot, format, prot, 
                                            plasmid_count, ";".join(plasmid_id))
@@ -206,7 +207,7 @@ def parse_options(arg_dict):
         if (arg_dict.db_folder):
             db_folder = HCGB.functions.files_functions.create_folder(os.path.abspath(arg_dict.db_folder))
         else:
-            db_folder = HCGB.functions.files_functions.create_subfolder("db", outdir)
+            db_folder = HCGB.functions.files_functions.create_subfolder("db", os.path.abspath(arg_dict.output_folder))
 
         ## debug messages
         if (arg_dict.debug):
@@ -233,6 +234,7 @@ def parse_options(arg_dict):
             
             ## call IDs into a list and create tmp folder
             strains2get = HCGB.functions.main_functions.readList_fromFile(arg_dict.GenBank_id)
+            strains2get = list(filter(None, strains2get))
                 
             ## debug messages
             if (arg_dict.debug):
@@ -383,7 +385,7 @@ def run_input(arg_dict):
     BacDup_functions.pipeline_header('BacDup')
     HCGB.functions.aesthetics_functions.boxymcboxface("Preparing input files")
     print ("--------- Starting Process ---------")
-    HCGB.functions.time_functions.print_time()
+    time_functions.print_time()
     
     ## init time
     start_time_total = time.time()
@@ -437,6 +439,9 @@ def run_input(arg_dict):
     
     print ('\n+ Check the option provided...')
     time.sleep(1)
+
+    ## time stamp
+    start_time_partial = time_functions.timestamp(start_time_total)
     
     #################################################
     ## Parse and obtain the type of input information provided
@@ -447,6 +452,9 @@ def run_input(arg_dict):
     ##               'annot_file','format_annot_file', 'proteins',
     ##               'plasmids_number','plasmids_ID'))
     
+    ## time stamp
+    start_time_partial = time_functions.timestamp(start_time_partial)
+
     ### Parse df_accID
     dict_input_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, df_accID, "input", arg_dict.debug)
     dict_parse_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, df_accID, "parse", arg_dict.debug)
@@ -470,17 +478,61 @@ def run_input(arg_dict):
             debug_message('annot_file: ' + df_accID.loc[sample, 'annot_file'], 'yellow')
             debug_message('genome' + df_accID.loc[sample, 'genome'], 'yellow')
 
-        ## TODO: Set threads to use in parallel
-        parse_annot_file(sample, df_accID.loc[sample, 'annot_file'], dict_parse_folders[sample], arg_dict.debug, df_accID.loc[sample, 'genome'])
-        
-        ## link or copy annotation file into folder_input
-        ## add df_accID.loc[sample,] information as csv
-        
-    
 
-    # create report folder
-    ## dump df_accID
+        ## timestamps 
+        input_timestamp = os.path.join(folder_input, '.success')
+        parse_timestamp = os.path.join(dict_parse_folders[sample], '.success')
+        
+        print()
+        print ("\t+ Parsing sample: " + sample)
+        
+        if (not HCGB.functions.files_functions.is_non_zero_file(parse_timestamp) and not HCGB.functions.files_functions.is_non_zero_file(input_timestamp)):
+        
+            ## TODO: Set threads to use in parallel
+            process_OK = parse_annot_file(sample, df_accID.loc[sample, 'annot_file'], dict_parse_folders[sample], arg_dict.debug, df_accID.loc[sample, 'genome'])
+            
+            if (process_OK):
+            
+                ## link or copy annotation file into folder_input
+                HCGB.functions.files_functions.get_symbolic_link_file(df_accID.loc[sample, 'annot_file'], folder_input)
+                
+                ## add df_accID.loc[sample,] information as csv into input folder
+                df_accID.loc[sample,].to_csv(os.path.join(folder_input, 'info.csv'), index=True, header=True)
+                
+                ## print time stamp
+                time_functions.print_time_stamp(input_timestamp)
+        
+                ## print time stamp
+                time_functions.print_time_stamp(parse_timestamp)
+            else:
+                
+                print("- Some error occurred for sample %s while parsing input options" %sample)
+                
+                ## print time stamp
+                time_functions.print_time_stamp(os.path.join(folder_input, '.fail'))
+        
+                ## print time stamp
+                time_functions.print_time_stamp(os.path.join(dict_parse_folders[sample], '.fail'))
+        else:
+            read_time = time_functions.read_time_stamp(parse_timestamp)
+            print (colored("\t+ Input parsing already available for sample %s [%s]" %(sample, read_time), 'green'))
+            print()
+
+    ### report generation
+    HCGB.functions.aesthetics_functions.boxymcboxface("Summarizing input files")
+    outdir_report = HCGB.functions.files_functions.create_subfolder("report", outdir)
+
+    input_report = HCGB.functions.files_functions.create_subfolder("input", outdir_report)
     
+    ## add df_accID.loc[sample,] information as csv into input folder
+    df_accID.to_csv(os.path.join(input_report, 'info.csv'), index=True, header=True)
     
+    ## maybe add a summary of the files?
     
+    print ("\n*************** Finish *******************")
+    start_time_partial = time_functions.timestamp(start_time_total)
+
+    print ("+ Exiting Input module.")
+    return()
+
     exit()
