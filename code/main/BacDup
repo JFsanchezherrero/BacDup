@@ -18,8 +18,8 @@ Modified in March 2021
 '''
 
 parser = argparse.ArgumentParser(prog='BacDup',
-                        #formatter_class=argparse.RawDescriptionHelpFormatter,
-                        description="Get an annotation file with duplicated protein on genome.")
+                        formatter_class=argparse.RawDescriptionHelpFormatter,
+                        description="Creates gene duplication analysis for Bacterial/Archaeal genomes.")
 
 subparsers = parser.add_subparsers(title='Available modules', help='', metavar='')
 
@@ -29,7 +29,9 @@ help_options = ('--help_format',
                 '--help_PhiSpy',
                 '--help_multiqc',
                 '--help_MGE_analysis',
-                '--help_input'
+                '--help_input',
+                '--blast_help',
+                '--detached_mode_help'
                 )
 
 subparser_space = subparsers.add_parser('Configuration', help='')
@@ -60,8 +62,8 @@ subparser_help.set_defaults(func=BacDup.modules.info.run_info)
 ##------------------------------ config ---------------------- ##
 subparser_config = subparsers.add_parser(
     'config',
-    help='Configure the pipeline',
-    description='Configure dependencies, executables and additional python or perl modules.',
+    help='Configures the pipeline',
+    description='Configures dependencies, executables and additional python or perl modules.',
 )
 subparser_config.add_argument("option", help="Checks if missing any dependencies or modules or tries to install them.", choices=['check','install'])
 subparser_config.add_argument("--install_path", help="Path to install missing modules or dependencies. [Default: BacDup/config folder]")
@@ -78,7 +80,7 @@ subparser_space = subparsers.add_parser('==============', help='')
 ##------------------------------ input_parser ---------------------- ##
 subparser_input = subparsers.add_parser(
     'input',
-    help='Check input for the pipeline',
+    help='Checks input for the pipeline',
     description='Checks the multiple format and options available for inputting data.',
 )
 
@@ -119,30 +121,48 @@ subparser_input.set_defaults(func=BacDup.modules.input_parser.run_input)
 ##-------------------------------------------------------------##
 
 
-##------------------------------ dup_annot ---------------------- ##
-subparser_annot = subparsers.add_parser(
-    'dup_annot',
+##------------------------------ search ---------------------- ##
+subparser_search = subparsers.add_parser(
+    'search',
     help='Creates gene duplication analysis',
-    description='.',
+    description='Creates gene duplication anaylsis using either pre-input data within a project folder or using a --detached mode.',
 )
 
+in_out_search = subparser_search.add_argument_group("Input/Output")
+in_out_search.add_argument("-i", "--input_folder", help="Input folder containing project information.", required= not any(elem in help_options for elem in sys.argv))
 
-##------------------------------ dup_annot ---------------------- ##
-#annotparser = parser.add_argument_group('Annotation parser options named arguments')
-#annotparser.add_argument("-a", "--annot_file", metavar="", help="Annotation file: genbank or GFF.")
-#annotparser.add_argument("-r", "--ref_file", metavar="", help="Genome references FASTA file.")
-#blastoptions = parser.add_argument_group('BLAST options named arguments')
-#blastoptions.add_argument("-b", "--blast_folder", metavar="", help="BLAST binary folder. **Note blast_folder=/usr/bin is set by default**")    
-#blastoptions.add_argument("-bs", "--bitscore", type=float, metavar="", default=50, help="BLAST bit-score: requires size of a sequence database in which the current match could be found just by chance. **Note bit_score = 50 is set by default**")
-#blastoptions.add_argument("-d", "--db_name", metavar="", help="New database name")
-#blastoptions.add_argument("-e", "--evalue", type=float, metavar="", default= 1e-05, help="BLAST e-value: number of expected hits of similar quality (score) that could be found just by chance. **Note e-value = 1e-05 is set by default**")
-#blastoptions.add_argument("-p", "--percentage", type=float, metavar="", default=85, help="Percentage of alignment in query. *Note pident = 85 is set by default**")
-#blastoptions.add_argument("-pi", "--pident", type=int, metavar="", default=85, help="Percentage of similarity in alignment. **Note percentage = 85 is set by default**")
-#parser.add_argument("-c", "--annot_table", metavar="", help="Genome annotation .csv file previously analyzed.")
-#parser.add_argument("-t", "--text_file", metavar="", help="Blast raw results text file.")
-#parser.add_argument("--pseudo", action="store_true", default=False, help="Wether to use pseudogenes or not")
-#parser.add_argument("-o", "--out_folder", metavar= "", help="Results folder")
-#parser.add_argument("--debug", action="store_true", default=False)
+parameters_search_group = subparser_search.add_argument_group("Parameters")
+parameters_search_group.add_argument("--pseudo", action="store_true", default=False, help="Whether to use pseudogenes or not. [Default: False]")
+
+config_search = subparser_search.add_argument_group("Configuration")
+config_search.add_argument("--detached", action="store_true", help="Isolated mode. Provide a unique path for annotation file o several using --batch option. --input_folder becomes the output folder. See additional information in --detached_mode_help")
+config_search.add_argument("--debug", action="store_true", default=False)
+config_search.add_argument("--batch", action="store_true", help="Provide this option if input are csv files containing a samples names and paths (csv format).")
+config_search.add_argument("--in_sample", help="File containing a list of samples to include (one per line) from input information [Default OFF].")
+config_search.add_argument("--ex_sample", help="File containing a list of samples to exclude (one per line) from input information [Default OFF].")
+
+blast_parse_group = subparser_search.add_argument_group("BLAST parameters")
+blast_parse_group.add_argument("-b", "--blast_folder", metavar="", help="BLAST binary folder. [ Default: automatic search of BLAST binaries in the system ]")    
+blast_parse_group.add_argument("-bs", "--bitscore", type=float, metavar="", default=50, help="BLAST bit-score threshold. [ Default: 50 ]")
+blast_parse_group.add_argument("-e", "--evalue", type=float, metavar="", default= 1e-05, help="BLAST e-value threshold [ Default: 1e-5 ]")
+blast_parse_group.add_argument("-p", "--percentage", type=float, metavar="", default=85, help="Percentage of alignment in query. [ Default: 85 ]")
+blast_parse_group.add_argument("-pi", "--pident", type=int, metavar="", default=85, help="Percentage of similarity in alignment. [ Default: 85 ]")
+
+detached_mode_search = subparser_search.add_argument_group("Detached mode option")
+detached_mode_search.add_argument("-a", "--annot_file", metavar="", help="Annotation file: genbank or GFF.")
+detached_mode_search.add_argument("-r", "--fasta_file", metavar="", help="Genome references FASTA file.")
+detached_mode_search.add_argument("-f", "--fasta_prot", metavar="", help="Fasta proteins sequences.")
+detached_mode_search.add_argument("-c", "--annot_table", metavar="", help="Genome annotation .csv file previously analyzed.")
+detached_mode_search.add_argument("-t", "--text_file", metavar="", help="Blast raw results text file.")
+detached_mode_search.add_argument("--sample_name", metavar="", help="If a single sample provided, the name to identify the sample")
+
+help_search = subparser_search.add_argument_group("Additional information")
+help_search.add_argument("--input_help", action="store_true", help="Provide additional help on input format")
+help_search.add_argument("--blast_help", action="store_true", help="BLAST parameters additional help and information")
+help_search.add_argument("--project_help", action="store_true", help="Project mode additional information")
+help_search.add_argument("--detached_mode_help", action="store_true", help="Detached mode additional information")
+
+subparser_search.set_defaults(func=BacDup.modules.search.run_search)   
 
 ##------------------------------ dup_plotter ---------------------- ##
 subparser_plot = subparsers.add_parser(

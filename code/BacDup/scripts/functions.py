@@ -6,7 +6,31 @@ import re
 from HCGB.functions.aesthetics_functions import debug_message
 from Bio import SeqIO
 
-##########################################################################################
+################################################################################
+def columns_rawBLAST_table():
+    '''Set the columns to include in a BLAST tabular file'''
+    columns = ["qseqid", "sseqid", "pident", "length",
+           "mismatch", "gapopen", "qstart", "qend",
+           "sstart", "send", "evalue", "bitscore", "qlen", "slen"]
+    return(columns)
+
+################################################################################
+def columns_accID_table():
+    '''Set the columns to include in the accID dataframe'''
+    columns= ['new_name','folder','genus','species','taxonomy','genome',
+              'annot_file','format_annot_file', 'proteins',
+              'plasmids_number','plasmids_ID']
+    return(columns)
+
+################################################################################
+def columns_annot_table():
+    '''Set the columns to include in the annotation tables'''    
+    columns = ['rec_id', 'locus_tag', 'protein_id', 'gene', 'start',
+               'end', 'strand', 'pseudo', 'product', 'Dbxref', 'inference',
+               'EC_number', 'old_locus_tag']
+    return(columns)
+
+################################################################################
 def file_readable_check(file_given, non_exit=False):
     '''Check file exists and it is ok.
     
@@ -23,7 +47,7 @@ def file_readable_check(file_given, non_exit=False):
         else:
             exit()
         
-##########################################################################################
+################################################################################
 def get_gbk_information(gbk, debug):
     ## read Genbank file to retrieve information for each samle
     ## https://biopython.org/wiki/SeqRecord

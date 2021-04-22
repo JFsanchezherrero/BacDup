@@ -4,8 +4,7 @@ Main modules BacDup
 __all__ = [
     'config',
     'input_parser',
-    #'dup_annot',
-    #'dup_search',
+    'search',
     'dup_plotter',
     'info'
     

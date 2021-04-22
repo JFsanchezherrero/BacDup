@@ -10,9 +10,6 @@ Created on 25 oct. 2020
 Modified in March 2021
 @author: Jose F. Sanchez-Herrero
 '''
-
-# TODO: create gtf parser
-
 ## useful imports
 import os
 import sys
@@ -21,6 +18,7 @@ import time
 from Bio import SeqIO
 import HCGB
 from HCGB.functions.aesthetics_functions import debug_message
+import HCGB.functions.time_functions as time_functions
 from termcolor import colored
 import pandas as pd
 
@@ -31,6 +29,178 @@ import BacDup.scripts.gff_parser as gff_parser
 import BacDup.scripts.format_checker as format_checker
 import BacDup.scripts.functions as BacDup_functions
 import BacDup.scripts.taxonomy_retrieval as taxonomy_retrieval
+
+##########################
+def run_input(arg_dict):
+    
+    """Main function of the input_parser module in BacDup package.
+    
+    This module prepares data for later gene duplication analysis. 
+    
+    It allows the user to provide either a single sample, multiple samples, NCBI 
+    GenBank IDs or NCBI taxonomy IDs to retrieve and obtain the annotation data.    
+    """
+    
+    ## help message
+    if (arg_dict.input_help):
+        help_input()
+        exit()
+    
+    BacDup_functions.pipeline_header('BacDup')
+    HCGB.functions.aesthetics_functions.boxymcboxface("Preparing input files")
+    print ("--------- Starting Process ---------")
+    time_functions.print_time()
+    
+    ## init time
+    start_time_total = time.time()
+    
+    ## absolute path for in & out
+    #input_dir = os.path.abspath(options.input)
+    outdir = os.path.abspath(arg_dict.output_folder)
+
+    ## output folder    
+    print ("\n+ Create output folder(s):")
+    HCGB.functions.files_functions.create_folder(outdir)
+
+    ## set defaults
+    if not (arg_dict.assembly_level):
+        arg_dict.assembly_level = 'complete'
+    if not (arg_dict.section):
+        arg_dict.section = 'genbank'
+
+    ## project or detached?
+    if arg_dict.detached:
+        arg_dict.project = False
+        final_dir = outdir
+        data_dir = outdir
+    else:
+        arg_dict.project = True
+        print ("+ Generate a directory containing information within the project folder provided")
+        final_dir = HCGB.functions.files_functions.create_subfolder("info", outdir)
+    
+    ## debug messages
+    if (arg_dict.debug):
+        debug_message('+++++++++++++++++++++++++++++++')
+        debug_message('Project/Detached option:', 'yellow')
+        debug_message('arg_dict.detached: ' + str(arg_dict.detached), 'yellow')
+        debug_message('arg_dict.project: ' + str(arg_dict.project), 'yellow')
+        debug_message('outdir:' + outdir, 'yellow')
+        debug_message('final_dir:' + final_dir, 'yellow')
+        debug_message('+++++++++++++++++++++++++++++++')
+        
+    ## get files
+    print ()
+    HCGB.functions.aesthetics_functions.print_sepLine("-",50, False)
+    print ('+ Getting input information provided... ')
+    print ('+ Several options available:')
+    print ('\t* Single/Multiple Annotation file:')
+    print ('\t  |-- GenBank format files')
+    print ('\t  |-- GFF files +  Reference fasta files required')
+    print ('\n\t* Single/Multiple NCBI GenBank IDs')
+    print ('\n\t* Single/Multiple NCBI taxonomy IDs + Options')
+    print ('\n\t* A previous BacDup project folder')
+    
+    print ('\n+ Check the option provided...')
+    time.sleep(1)
+
+    ## time stamp
+    start_time_partial = time_functions.timestamp(start_time_total)
+    
+    #################################################
+    ## Parse and obtain the type of input information provided
+    #################################################
+    df_accID = parse_options(arg_dict)
+    ## pd.DataFrame: 'new_name','folder','genus',
+    ##               'species','taxonomy','genome', 
+    ##               'annot_file','format_annot_file', 'proteins',
+    ##               'plasmids_number','plasmids_ID'))
+    
+    ## time stamp
+    start_time_partial = time_functions.timestamp(start_time_partial)
+    
+    ## parse information accordingly
+    parse_information(df_accID, outdir)
+
+    ### report generation
+    HCGB.functions.aesthetics_functions.boxymcboxface("Summarizing input files")
+    outdir_report = HCGB.functions.files_functions.create_subfolder("report", outdir)
+
+    input_report = HCGB.functions.files_functions.create_subfolder("input", outdir_report)
+    
+    ## add df_accID.loc[sample,] information as csv into input folder
+    df_accID.to_csv(os.path.join(input_report, 'info.csv'), index=True, header=True)
+    
+    ## maybe add a summary of the files?
+    
+    print ("\n*************** Finish *******************")
+    start_time_partial = time_functions.timestamp(start_time_total)
+
+    print ("+ Exiting Input module.")
+    return()
+
+################################################################################
+def parse_information(arg_dict, df_accID, outdir):
+
+    ### Parse df_accID
+    dict_input_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, df_accID, "input", arg_dict.debug)
+    dict_parse_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, df_accID, "parse", arg_dict.debug)
+
+    ## debug messages
+    if (arg_dict.debug):
+        debug_message('+++++++++++++++++++++++++++++++')
+        print("dict_input_folders")
+        print(dict_input_folders)
+        print("dict_parse_folders")
+        print(dict_parse_folders)
+
+    ## parse each sample retrieved
+    for sample, folder_input in dict_input_folders.items():
+
+        if (arg_dict.debug):
+            debug_message('sample: ' + sample, 'yellow')
+            debug_message('folder_input: ' + folder_input, 'yellow')
+            debug_message('folder_parse: ' + dict_parse_folders[sample], 'yellow')
+            debug_message('annot_file: ' + df_accID.loc[sample, 'annot_file'], 'yellow')
+            debug_message('genome' + df_accID.loc[sample, 'genome'], 'yellow')
+
+        ## timestamps 
+        input_timestamp = os.path.join(folder_input, '.success')
+        parse_timestamp = os.path.join(dict_parse_folders[sample], '.success')
+        
+        print()
+        print ("\t+ Parsing sample: " + sample)
+        
+        if (not HCGB.functions.files_functions.is_non_zero_file(parse_timestamp) and not HCGB.functions.files_functions.is_non_zero_file(input_timestamp)):
+        
+            ## TODO: Set threads to use in parallel
+            process_OK = parse_annot_file(sample, df_accID.loc[sample, 'annot_file'], dict_parse_folders[sample], arg_dict.debug, df_accID.loc[sample, 'genome'])
+            
+            if (process_OK):
+            
+                ## link or copy annotation file into folder_input
+                HCGB.functions.files_functions.get_symbolic_link_file(df_accID.loc[sample, 'annot_file'], folder_input)
+                
+                ## add df_accID.loc[sample,] information as csv into input folder
+                df_accID.loc[sample,].to_csv(os.path.join(folder_input, 'info.csv'), index=True, header=True)
+                
+                ## print time stamp
+                time_functions.print_time_stamp(input_timestamp)
+        
+                ## print time stamp
+                time_functions.print_time_stamp(parse_timestamp)
+            else:
+                
+                print("- Some error occurred for sample %s while parsing input options" %sample)
+                
+                ## print time stamp
+                time_functions.print_time_stamp(os.path.join(folder_input, '.fail'))
+        
+                ## print time stamp
+                time_functions.print_time_stamp(os.path.join(dict_parse_folders[sample], '.fail'))
+        else:
+            read_time = time_functions.read_time_stamp(parse_timestamp)
+            print (colored("\t+ Input parsing already available for sample %s [%s]" %(sample, read_time), 'green'))
+            print()
 
 ##########################
 def input_help():
@@ -70,14 +240,20 @@ def parse_annot_file(name, annot_file, output_path, Debug, ref_file=""):
             
         ## parse gbk or gff        
         if (format=='gbk'):
+            print (colored('\t* GenBank format file:........[OK]', 'green'))
             return(gbf_parser.gbf_parser_caller(annot_file, output_path, Debug))
         
         elif(format=='gff'):
-            return(gff_parser.gff_parser_caller(annot_file, ref_file, output_path, Debug))
+            print (colored('\t* GFF format file:.......[OK]', 'green'))
+            if (HCGB.functions.files_functions.is_non_zero_file(ref_file)):
+                return(gff_parser.gff_parser_caller(annot_file, ref_file, output_path, Debug))
+            else:
+                print(colored("ERROR: No genome reference file provided for this GFF annotation. Check input options provided.","red"))
+                exit()
         
         ## not valid via this option
         else:
-            print()
+            print(colored("ERROR: not valid via this option","red"))
             exit()
             
     ## not accessible for this sample
@@ -131,11 +307,9 @@ def parse_options(arg_dict):
             ##
             dict_entries[sample_name] = arg_dict.annot_file
             
-            ## fix dataframe df_accID to match other formats
-            ## TODO
-        
         ## create dataframe df_accID to match other formats
-        df_accID=pd.DataFrame(columns=('new_name','folder','genus','species','taxonomy','genome', 'annot_file','format_annot_file', 'proteins','plasmids_number','plasmids_ID'))
+        df_accID=pd.DataFrame(columns=(BacDup_functions.columns_accID_table()))
+        
         for name, file_annot in dict_entries.items():
             file_annot = os.path.abspath(file_annot)
             
@@ -164,13 +338,16 @@ def parse_options(arg_dict):
                 debug_message('format: ' + format, 'yellow')
             
             ## parse accordingly
+            taxonomy = "" 
+            organism  = ""
+            taxonomy_string = ""
+            genus = ""
             if (format == 'gbk'):
                 ## get information from each sample
-                (taxonomy, organism) = BacDup.scripts.functions.get_gbk_information(gbk, arg_dict.debug)
+                (taxonomy, organism) = BacDup.scripts.functions.get_gbk_information(file_annot, arg_dict.debug)
                 ## plasmid_count, plasmid_id not available
                 
             elif (format == 'gff'):
-                (taxonomy, organism) = ""
                 if (arg_dict.ref_file):
                     arg_dict.ref_file = os.path.abspath(arg_dict.ref_file)
                     BacDup_functions.file_readable_check(arg_dict.ref_file)
@@ -182,8 +359,14 @@ def parse_options(arg_dict):
                         genome = arg_dict.ref_file
 
             ## save into dataframe
-            taxonomy_string = ";".join(taxonomy)
-            df_accID.loc[len(df_accID)] = (name, dir_path, taxonomy[-1], organism, taxonomy_string, genome, file_annot, format, prot, plasmid_count, ";".join(plasmid_id))
+            if len(taxonomy) > 1:
+                genus = taxonomy[-1]
+                taxonomy_string = ";".join(taxonomy)
+                
+            dir_path = os.path.abspath(os.path.dirname(file_annot))
+            df_accID.loc[len(df_accID)] = (name, dir_path, genus, organism, taxonomy_string, genome, 
+                                           file_annot, format, prot, 
+                                           plasmid_count, ";".join(plasmid_id))
 
     ## --------------------------------------- ##
     ## NCBI RefSeq/Genbank IDs: GCA_XXXXXXXX.1; GCF_XXXXXXXXX.1
@@ -193,7 +376,7 @@ def parse_options(arg_dict):
         if (arg_dict.db_folder):
             db_folder = HCGB.functions.files_functions.create_folder(os.path.abspath(arg_dict.db_folder))
         else:
-            db_folder = HCGB.functions.files_functions.create_subfolder("db", outdir)
+            db_folder = HCGB.functions.files_functions.create_subfolder("db", os.path.abspath(arg_dict.output_folder))
 
         ## debug messages
         if (arg_dict.debug):
@@ -220,6 +403,7 @@ def parse_options(arg_dict):
             
             ## call IDs into a list and create tmp folder
             strains2get = HCGB.functions.main_functions.readList_fromFile(arg_dict.GenBank_id)
+            strains2get = list(filter(None, strains2get))
                 
             ## debug messages
             if (arg_dict.debug):
@@ -326,9 +510,9 @@ def parse_options(arg_dict):
                                                           arg_dict.debug, assembly_level_given=arg_dict.assembly_level,
                                                           group_given=group_obtained, section_given=arg_dict.section)
 
+        ## TODO
         ## print list and dictionary of possible and selected taxIDs 
         #HCGB.functions.main_functions.printList2file("./out_file.txt", string_info)
-        ## TODO
         #HCGB.functions.main_functions.printDictionary2file("./out_file.txt", string_info)
 
         #################
@@ -346,112 +530,6 @@ def parse_options(arg_dict):
         ## TODO
 
     ## Returns dataframe with information
+    
+    df_accID = df_accID.set_index('new_name')
     return (df_accID)
-
-
-##########################
-def run_input(arg_dict):
-    
-    """Main function of the input_parser module in BacDup package.
-    
-    This module prepares data for later gene duplication analysis. 
-    
-    It allows the user to provide either a single sample, multiple samples, NCBI 
-    GenBank IDs or NCBI taxonomy IDs to retrieve and obtain the annotation data.    
-    """
-    
-    ## help message
-    if (arg_dict.input_help):
-        help_input()
-        exit()
-    
-    BacDup_functions.pipeline_header('BacDup')
-    HCGB.functions.aesthetics_functions.boxymcboxface("Preparing input files")
-    print ("--------- Starting Process ---------")
-    HCGB.functions.time_functions.print_time()
-    
-    ## init time
-    start_time_total = time.time()
-    
-    ## absolute path for in & out
-    #input_dir = os.path.abspath(options.input)
-    outdir = os.path.abspath(arg_dict.output_folder)
-
-    ## output folder    
-    print ("\n+ Create output folder(s):")
-    HCGB.functions.files_functions.create_folder(outdir)
-
-    ## set defaults
-    if not (arg_dict.assembly_level):
-        arg_dict.assembly_level = 'complete'
-    if not (arg_dict.section):
-        arg_dict.section = 'genbank'
-
-
-    ## project or detached?
-    if arg_dict.detached:
-        arg_dict.project = False
-        final_dir = outdir
-        data_dir = outdir
-    else:
-        arg_dict.project = True
-        print ("+ Generate a directory containing information within the project folder provided")
-        final_dir = HCGB.functions.files_functions.create_subfolder("info", outdir)
-    
-    ## debug messages
-    if (arg_dict.debug):
-        
-        debug_message('+++++++++++++++++++++++++++++++')
-        debug_message('Project/Detached option:', 'yellow')
-        debug_message('arg_dict.detached: ' + str(arg_dict.detached), 'yellow')
-        debug_message('arg_dict.project: ' + str(arg_dict.project), 'yellow')
-        debug_message('outdir:' + outdir, 'yellow')
-        debug_message('final_dir:' + final_dir, 'yellow')
-        debug_message('+++++++++++++++++++++++++++++++')
-        
-        
-    ## get files
-    print ()
-    HCGB.functions.aesthetics_functions.print_sepLine("-",50, False)
-    print ('+ Getting input information provided... ')
-    print ('+ Several options available:')
-    print ('\t* Single/Multiple Annotation file:')
-    print ('\t  |-- GenBank format files')
-    print ('\t  |-- GFF files +  Reference fasta files required')
-    print ('\n\t* Single/Multiple NCBI GenBank IDs')
-    print ('\n\t* Single/Multiple NCBI taxonomy IDs + Options')
-    print ('\n\t* A previous BacDup project folder')
-    
-    print ('\n+ Check the option provided...')
-    time.sleep(1)
-    
-    #################################################
-    ## Parse and obtain the type of input information provided
-    #################################################
-    df_accID = parse_options(arg_dict)
-    ## pd.DataFrame: 'new_name','folder','genus',
-    ##               'species','taxonomy','genome', 
-    ##               'annot_file','format_annot_file', 'proteins',
-    ##               'plasmids_number','plasmids_ID'))
-    
-    ### Parse df_accID
-    dict_input_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, df_accID, "input", arg_dict.debug)
-    dict_parse_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, df_accID, "parse", arg_dict.debug)
-
-    ## parse each sample retrieved
-    for sample, folder_input in dict_input_folders.items():
-
-        ## TODO: Set threads to use in parallel
-        parse_annot_file(sample, df_accID.loc[sample, 'annot_file'], dict_parse_folders[sample], arg_dict.debug, df_accID.loc[sample, 'genome'])
-        
-        ## link or copy annotation file into folder_input
-        ## add df_accID.loc[sample,] information as csv
-        
-    
-
-    # create report folder
-    ## dump df_accID
-    
-    
-    
-    exit()
