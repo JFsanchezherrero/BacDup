@@ -144,7 +144,7 @@ def run_search(arg_dict):
         ## get results
         file_data = pd_samples_retrieved.loc[sample, 'file_data']
         format = pd_samples_retrieved.loc[sample, 'format']
-        filtered_data = dup_searcher.filter_data(file_data, format, arg_dict.pident, arg_dict.evalue, arg_dict.percentage, arg_dict.bitscore, folder, arg_dict.debug)
+        filtered_data = dup_searcher.filter_data(sample, file_data, format, arg_dict.pident, arg_dict.evalue, arg_dict.percentage, arg_dict.bitscore, folder, arg_dict.debug)
         
         ## get annotation
         annot_table = pd_samples_retrieved.loc[sample, 'annot_table']
