@@ -31,19 +31,6 @@ import BacDup.scripts.functions as BacDup_functions
 import BacDup.scripts.dup_searcher as dup_searcher
 import BacDup.modules.input_parser as input_parser
 
-
-#############
-### DONE! ###
-#############
-# 1. provide a GFF+FASTA/GBF file
-#
-# 2. get sequence protein FASTA file ############
-#                                    ############## input_parser --> protein_gbf or protein_gff
-#    get annotation csv file from GFF/GBF file ##
-#
-# 3. convert protein FASTA file into a BLAST database ##
-# 4. get duplicated proteins BLASTA .txt file ############ dup_searcher --> blast_caller
-# 5. get filtered results into a .csv file #############
 ###############
 #### TO DO ####
 ###############
@@ -110,7 +97,6 @@ def run_search(arg_dict):
         debug_message('outdir:' + outdir, 'yellow')
         debug_message('+++++++++++++++++++++++++++++++')
         
-        
     ## get files
     print ()
     HCGB.functions.aesthetics_functions.print_sepLine("-",50, False)
@@ -138,28 +124,65 @@ def run_search(arg_dict):
     
     ## for each sample
     dict_search_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, pd_samples_retrieved, "search", arg_dict.debug)
+    annot_search_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, pd_samples_retrieved, "dups", arg_dict.debug)
 
     ## create results
+    data2add = pd.DataFrame(columns=("sample", "total_dupGroups", "total_dups", "total_prots"))
     for sample, folder in dict_search_folders.items():
-        ## get results
-        file_data = pd_samples_retrieved.loc[sample, 'file_data']
-        format = pd_samples_retrieved.loc[sample, 'format']
-        filtered_data = dup_searcher.filter_data(sample, file_data, format, arg_dict.pident, arg_dict.evalue, arg_dict.percentage, arg_dict.bitscore, folder, arg_dict.debug)
         
-        ## get annotation
-        annot_table = pd_samples_retrieved.loc[sample, 'annot_table']
-        dup_annot = get_dupannot(filtered_data, filtered_annot, arg_dict.pseudo, arg_dict.debug)
-    
-        ## save into file
-        dup_annot_file = os.path.join(folder, 'dup_annot.csv')
-        dup_annot.to_csv(dup_annot_file, header=True)
-    
-        ## add data2add 
-        print("#####")
-        print("Found %s groups of duplicates with a total of %s proteins duplicated from %s proteins on the original file" % (
-            len(dup_annot["dup_id"].unique()), dup_annot.shape[0], annot_table.shape[0]))
-        print("#####")
+        annot_timestamp = os.path.join(annot_search_folders[sample], '.annot_success')
+        dup_annot_file = os.path.join(annot_search_folders[sample], 'dup_annot.csv')
         
+        ## annotation
+        annot_table_file = pd_samples_retrieved.loc[sample, 'annot_table']
+            
+        if (not HCGB.functions.files_functions.is_non_zero_file(annot_timestamp)):
+
+            ## get results
+            file_data = pd_samples_retrieved.loc[sample, 'file_data']
+            format = pd_samples_retrieved.loc[sample, 'format']
+            filtered_data = dup_searcher.filter_data(sample, file_data, format, arg_dict.pident, arg_dict.evalue, arg_dict.percentage, arg_dict.bitscore, folder, arg_dict.debug)
+            
+            ## timestamps 
+            filter_timestamp = os.path.join(annot_search_folders[sample], '.filter_success')
+            if (not HCGB.functions.files_functions.is_non_zero_file(filter_timestamp)):
+                #save results as a .csv file
+                sort_csv = os.path.abspath(os.path.join(annot_search_folders[sample], 'filtered_results.csv'))
+                filtered_data.to_csv(sort_csv, header=True, index=False)
+                
+                ## print time stamp
+                time_functions.print_time_stamp(filter_timestamp)
+            else:
+                read_time = time_functions.read_time_stamp(filter_timestamp)
+                print (colored("\t+ Filter results already available for sample %s [%s]" %(sample, read_time), 'green'))
+            
+            ## get annotation
+            (dup_annot_df, total_dupGroups, total_dups, total_prots) = get_dupannot(filtered_data, annot_table_file, arg_dict.pseudo, arg_dict.debug)
+            data2add.loc[sample] = [sample, total_dupGroups, total_dups, total_prots]
+            
+            ##
+            info_dup_file = os.path.join(annot_search_folders[sample], 'info_dup.csv')
+            data2add.loc[sample].to_csv(info_dup_file, header=True, index=False)
+            
+            ## save into file
+            dup_annot_df.to_csv(dup_annot_file, header=True)
+            
+            ## print time stamp
+            time_functions.print_time_stamp(annot_timestamp)
+            
+        else:
+            read_time = time_functions.read_time_stamp(annot_timestamp)
+            print (colored("\t+ Duplicate annotation already available for sample %s [%s]" %(sample, read_time), 'green'))
+    
+            ## add info for each
+            dup_annot_df = HCGB.functions.main_functions.get_data(dup_annot_file, ',', "index_col=0")
+            total_dupGroups = len(dup_annot_df["dup_id"].unique())
+            total_dups = dup_annot_df.shape[0]
+            annot_table = HCGB.functions.main_functions.get_data(annot_table_file, ',', "index_col=0")
+            total_prots = annot_table.shape[0]
+            
+            ## get data
+            data2add.loc[sample] = [sample, total_dupGroups, total_dups, total_prots]
     
     ### report generation
     HCGB.functions.aesthetics_functions.boxymcboxface("Summarizing duplicated search")
@@ -168,8 +191,7 @@ def run_search(arg_dict):
     search_report = HCGB.functions.files_functions.create_subfolder("search", outdir_report)
     
     ## add data2add 
-    data2add = pd.DataFrame()
-    data2add.to_csv(os.path.join(search_report, 'search_annot.csv'), index=True, header=True)
+    data2add.to_csv(os.path.join(search_report, 'info_annot.csv'), index=True, header=True)
     
     ## maybe add a summary of the files?
     
@@ -393,14 +415,24 @@ def parse_search_options(arg_dict):
     return(pd_samples_retrieved)
         
 ################################################################################
-def get_dupannot(blast_results_df, annot_table, pseudo, debug):
+def get_dupannot(blast_results_df, annot_table_file, pseudo, debug):
     '''Get an annotation information for duplicated proteins'''
     
+    ## debug messages
+    if debug:
+        debug_message('get_dupannot function', 'yellow')
+        debug_message('blast_results_df: ', 'yellow')
+        print (blast_results_df)
+        debug_message('annot_table_file: ' + annot_table_file, 'yellow')
+        debug_message('pseudo: ' + str(pseudo), 'yellow')
+        
     #get duplicated protein list
-    qseqid = list(filtered_data["qseqid"])
-    sseqid =list(filtered_data["sseqid"])
-    qseqid.extend(sseqid)
+    qseqid = list(blast_results_df["qseqid"])
+    sseqid =list(blast_results_df["sseqid"])
     prot_id = list(set(qseqid))
+    
+    ## gets annotation
+    annot_table = HCGB.functions.main_functions.get_data(annot_table_file, ',', "index_col=0")
     
     #get filtered_annot table
     filtered_annot = annot_table.loc[prot_id]
@@ -420,27 +452,19 @@ def get_dupannot(blast_results_df, annot_table, pseudo, debug):
     for index, row in blast_results_df.iterrows():
         relations_dict[row['qseqid']].append(row['sseqid'])
     
-    ## debug
-    # print (relations_dict)
-
+    ## debug messages
+    if debug:
+        debug_message('relations_dict: ', 'yellow')
+        print (relations_dict)
+        
     ## 2nd round
     new_relations_dict = defaultdict(list)
     dups=0
     for key, value in relations_dict.items():
-        ## debug
-        ## print ()
-        ## debug
-        ## print ("key: " + key)
-        ## debug
-        ## print ("value: " + str(value))
-
         stop=False
         for dup_id, new_value in new_relations_dict.items():
             if key in new_value:
                 stop=True
-                ## debug
-                ## print ("Belongs to group: " + dup_id)
-
         if not stop:
             for key2, value2 in relations_dict.items():
                 if (key == key2):
@@ -450,18 +474,14 @@ def get_dupannot(blast_results_df, annot_table, pseudo, debug):
                         for i in value2: 
                             if i not in value: 
                                 value.extend(i)
-
             dups += 1
             value.append(key)
             new_relations_dict[str(dups)] = value
-            ## debug
-            ## print(new_relations_dict)
-            ## debug
-            ## print("**")
             
-    ## print ()
-    ## print (new_relations_dict)
-    ## print ()
+    ## debug messages
+    if debug:
+        debug_message('new_relations_dict: ', 'yellow')
+        print (new_relations_dict)
 
     ## Create data
     df_data = pd.DataFrame(columns=('index', 'dup_id'))
@@ -470,6 +490,27 @@ def get_dupannot(blast_results_df, annot_table, pseudo, debug):
             df_data.loc[i] = (i, dup_id)
 
     ## merge information    
-    dup_annot_df = dup_annot_df.join(df_data)
+    dup_annot_df = filtered_annot.join(df_data)
+    ## debug messages
+    if debug:
+        debug_message('dup_annot_df: ', 'yellow')
+        HCGB.functions.main_functions.print_all_pandaDF(dup_annot_df)
+        
     dup_annot_df = dup_annot_df.drop(columns='index')
-    return (dup_annot_df)
+    
+    ## debug messages
+    if debug:
+        debug_message('dup_annot_df: ', 'yellow')
+        print (dup_annot_df)
+        
+    ## add info for each
+    total_dupGroups = len(dup_annot_df["dup_id"].unique())
+    total_dups = dup_annot_df.shape[0]
+    total_prots = annot_table.shape[0]
+     
+    print("#####")
+    print("Found %s groups of duplicates with a total of %s proteins duplicated from %s proteins on the original file" % (
+        total_dupGroups, total_dups, total_prots))
+    print("#####")
+    
+    return(dup_annot_df, total_dupGroups, total_dups, total_prots)

@@ -20,9 +20,12 @@ from Bio import SeqIO, Seq
 import argparse
 from argparse import ArgumentParser
 
-import BacDup.scripts.blast_caller as blast_caller
-import BacDup.scripts.functions as BacDup_functions
+import HCGB
 from HCGB.functions.aesthetics_functions import debug_message
+import HCGB.functions.time_functions as time_functions
+
+import BacDup
+import BacDup.scripts.functions as BacDup_functions
 
 ################################################################################
 def create_blast_results(sample, fasta_file, outdir, debug):
@@ -48,11 +51,14 @@ def create_blast_results(sample, fasta_file, outdir, debug):
 
         ## get binaries
         (makeblastdb_exe, blastp_exe) = BacDup.modules.config.get_exe('BLAST', debug)
+        makeblastdb_exe = "/usr/bin/makeblastdb" 
+        blastp_exe = "/usr/bin/blastp"
         
         ## check if db is indexed already
+        db_path_name = os.path.join(os.path.abspath(outdir), sample + '_db')
         if (not HCGB.functions.files_functions.is_non_zero_file(db_timestamp)):
             ## generate blastdb for genome
-            blast_functions.makeblastdb(db_path_name, fasta_file, makeblastdb_exe) # HCGB function    
+            HCGB.functions.blast_functions.makeblastdb(db_path_name, fasta_file, makeblastdb_exe, 'prot') # HCGB function    
         
             ## print time stamp
             time_functions.print_time_stamp(db_timestamp)
@@ -61,7 +67,7 @@ def create_blast_results(sample, fasta_file, outdir, debug):
             print (colored("\t+ BLAST database already available for sample %s [%s]" %(sample, read_time), 'green'))
             
         ## create blastp outfile
-        blast_functions.blastp(blastpexe, raw_blast, db_path_name, fasta_file, 1) # HCGB function
+        HCGB.functions.blast_functions.blastp(blastp_exe, raw_blast, db_path_name, fasta_file, 1) # HCGB function
 
         ## print time stamp
         time_functions.print_time_stamp(search_timestamp)
@@ -167,7 +173,7 @@ def get_data(sample, file_data, format, out_folder, debug):
     elif (format=='fasta'):
         
         raw_blast = create_blast_results(sample, file_data, out_folder, debug)
-        raw_blast = pd.read_csv(raw_blast, sep="\t", header = None, names=columns)
+        raw_blast = pd.read_csv(raw_blast, sep="\t", header = None, names=BacDup_functions.columns_rawBLAST_table())
         
     return (raw_blast)
 
@@ -184,11 +190,7 @@ def filter_data(sample, file_data, format, pident, evalue, percent, bitscore, ou
 
     #sort by aln_pct_qlen (desc), evalue(asc), bitscore(desc)
     by_alnpct = filtered_results.sort_values(["aln_pct_qlen", "evalue", "bitscore"],
-                                   ascending=[False, True, False])
-
-    #save results as a .csv file
-    sort_csv_file = os.path.abspath(os.path.join(out_folder, 'filtered_results.csv'))
-    by_alnpct.to_csv(sort_csv, header=True, index=False)
+                                       ascending=[False, True, False])
     return(by_alnpct)
 
 ###############################################################
