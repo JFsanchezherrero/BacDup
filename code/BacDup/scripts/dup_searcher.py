@@ -3,7 +3,6 @@
 ## Jose F. Sanchez & Alba Moya                              ##
 ## Copyright (C) 2020-2021                                  ##
 ##############################################################
-from pickle import FALSE
 '''
 Created on 3 dic. 2020
 @author: alba
@@ -21,9 +20,62 @@ from Bio import SeqIO, Seq
 import argparse
 from argparse import ArgumentParser
 
-import BacDup.scripts.blast_caller as blast_caller
-import BacDup.scripts.functions as BacDup_functions
+import HCGB
 from HCGB.functions.aesthetics_functions import debug_message
+import HCGB.functions.time_functions as time_functions
+
+import BacDup
+import BacDup.scripts.functions as BacDup_functions
+
+################################################################################
+def create_blast_results(sample, fasta_file, outdir, debug):
+    '''Creates BLAST results for each fasta vs. itself'''
+    
+    #phr is the header file, pin is the index file, psq is the sequence file
+    
+    ## debug messages
+    if debug:
+        debug_message('create_blast_results function call:', 'yellow')
+        debug_message('sample: ' + sample, 'yellow')
+        debug_message('fasta_file: ' + fasta_file, 'yellow')
+        debug_message('outdir: ' + outdir, 'yellow')
+    
+    ## output file
+    raw_blast = os.path.abspath(os.path.join(outdir, "BLAST_raw_results.tsv"))
+
+    ## timestamps 
+    db_timestamp = os.path.join(outdir, '.db_success')
+    search_timestamp = os.path.join(outdir, '.blast_success')
+        
+    if (not HCGB.functions.files_functions.is_non_zero_file(db_timestamp) and not HCGB.functions.files_functions.is_non_zero_file(search_timestamp)):
+
+        ## get binaries
+        (makeblastdb_exe, blastp_exe) = BacDup.modules.config.get_exe('BLAST', debug)
+        makeblastdb_exe = "/usr/bin/makeblastdb" 
+        blastp_exe = "/usr/bin/blastp"
+        
+        ## check if db is indexed already
+        db_path_name = os.path.join(os.path.abspath(outdir), sample + '_db')
+        if (not HCGB.functions.files_functions.is_non_zero_file(db_timestamp)):
+            ## generate blastdb for genome
+            HCGB.functions.blast_functions.makeblastdb(db_path_name, fasta_file, makeblastdb_exe, 'prot') # HCGB function    
+        
+            ## print time stamp
+            time_functions.print_time_stamp(db_timestamp)
+        
+        else:
+            print (colored("\t+ BLAST database already available for sample %s [%s]" %(sample, read_time), 'green'))
+            
+        ## create blastp outfile
+        HCGB.functions.blast_functions.blastp(blastp_exe, raw_blast, db_path_name, fasta_file, 1) # HCGB function
+
+        ## print time stamp
+        time_functions.print_time_stamp(search_timestamp)
+    else:
+        read_time = time_functions.read_time_stamp(search_timestamp)
+        print (colored("\t+ Duplicate search already available for sample %s [%s]" %(sample, read_time), 'green'))
+            
+    return (raw_blast)
 
 ################################################################################
 def check_annot_table(annot_table, file, format, debug):
@@ -99,7 +151,7 @@ def filter_BLAST(raw_blast, pident, evalue, bitscore, percent):
     return(filtered_results)
 
 ################################################################################
-def get_data(file_data, format, out_folder, debug):
+def get_data(sample, file_data, format, out_folder, debug):
     '''Function to get BLAST results'''
     
     file_data = os.path.abspath(file_data)
@@ -120,30 +172,25 @@ def get_data(file_data, format, out_folder, debug):
                 
     elif (format=='fasta'):
         
-        ## FIXME
-        raw_blast = blast_caller.create_blast_results(arg_dict)
-        raw_blast = pd.read_csv(raw_blast, sep="\t", header = None, names=columns)
+        raw_blast = create_blast_results(sample, file_data, out_folder, debug)
+        raw_blast = pd.read_csv(raw_blast, sep="\t", header = None, names=BacDup_functions.columns_rawBLAST_table())
         
     return (raw_blast)
 
 ################################################################################
-def filter_data(file_data, format, pident, evalue, percent, bitscore, out_folder, debug):
+def filter_data(sample, file_data, format, pident, evalue, percent, bitscore, out_folder, debug):
     
     '''
     Get duplicated proteins and generate a filtered and sort dataframe depending on arguments values
     if a BLAST results text file is provided, it should have next columns names.    
     '''
     ## get BLAST results and filter
-    raw_blast = get_data(file_data, format, out_folder, debug)
+    raw_blast = get_data(sample, file_data, format, out_folder, debug)
     filtered_results = filter_BLAST(raw_blast, pident, evalue, percent, bitscore)
 
     #sort by aln_pct_qlen (desc), evalue(asc), bitscore(desc)
     by_alnpct = filtered_results.sort_values(["aln_pct_qlen", "evalue", "bitscore"],
-                                   ascending=[False, True, False])
-
-    #save results as a .csv file
-    sort_csv_file = os.path.abspath(os.path.join(out_folder, 'filtered_results.csv'))
-    by_alnpct.to_csv(sort_csv, header=True, index=False)
+                                       ascending=[False, True, False])
     return(by_alnpct)
 
 ###############################################################
