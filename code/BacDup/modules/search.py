@@ -429,6 +429,8 @@ def get_dupannot(blast_results_df, annot_table_file, pseudo, debug):
     #get duplicated protein list
     qseqid = list(blast_results_df["qseqid"])
     sseqid =list(blast_results_df["sseqid"])
+    
+    qseqid.extend(sseqid) ## Fix me
     prot_id = list(set(qseqid))
     
     ## gets annotation

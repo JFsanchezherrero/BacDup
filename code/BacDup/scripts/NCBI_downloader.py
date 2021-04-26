@@ -152,6 +152,12 @@ def NCBIdownload(acc_ID, data_folder, debug, assembly_level='complete', group='b
     section_given = get_section(acc_ID, debug)
     group_accID = NCBI_get_info_GenbankID(data_folder, acc_ID, debug)
     
+    if debug:
+        debug_message("-----------------------------------------")
+        debug_message("NCBIdownload function call", color="yellow")
+        debug_message("section_given: " + section_given, color="yellow")
+        debug_message("group_accID: " + group_accID, color="yellow")
+
     ## save into dataframe
     dataDownloaded=pd.DataFrame(columns=(BacDup.scripts.functions.columns_accID_table()))
     
@@ -238,39 +244,37 @@ def NCBI_get_info_GenbankID(data_folder, acc_ID, debug, assembly_level_given ='c
 
     section_given = get_section(acc_ID, debug)
 
+    if debug:
+        debug_message("-----------------------------------------")
+        debug_message("NCBI_get_info_GenbankID function call", color="yellow")
+
+
     ## import module and class
     import ncbi_genome_download
     from ncbi_genome_download.config import NgdConfig
     
+    ## FIXME
     ## blinded NCBI search
-    try:
-        ## bacteria
+    
+    tries = ['bacteria', 'archaea']
+    for entry_tried in tries:
+        if debug:
+            debug_message("Trying with: " + entry_tried, color="yellow")
+
         ngd_config = NgdConfig.from_kwargs(section=section_given, 
                      file_formats='genbank',
                      assembly_accessions=acc_ID,
                      output=data_folder,
                      dry_run=True, 
-                     groups='bacteria')
+                     groups=entry_tried)
         info = ncbi_genome_download.core.select_candidates(ngd_config)
-        return('bacteria')
+        if info:
+            debug_message("It worked!", color="yellow")
+            return(entry_tried)
         
-    except:
-        ## archaea
-        try:
-            ngd_config = NgdConfig.from_kwargs(section=section_given, 
-                     file_formats='genbank',
-                     assembly_accessions=acc_ID,
-                     output=data_folder,
-                     dry_run=True, 
-                     groups='archaea')
-            
-            info = ncbi_genome_download.core.select_candidates(ngd_config)
-            return('archaea')
-        
-        except:
-            raise "**** ERROR: Something happen while connecting to NCBI... ***"
-            exit()
-            return (False)
+    raise "**** ERROR: Something happen while connecting to NCBI... ***"
+    exit()
+    return (False)
 
 ###############################################################
 def help_options():
