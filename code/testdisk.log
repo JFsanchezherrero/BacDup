@@ -1,0 +1,81 @@
+
+
+Thu Apr 22 11:32:35 2021
+Command line: TestDisk
+
+TestDisk 7.1, Data Recovery Utility, July 2019
+Christophe GRENIER <grenier@cgsecurity.org>
+https://www.cgsecurity.org
+OS: Linux, kernel 5.8.0-50-generic (#56~20.04.1-Ubuntu SMP Mon Apr 12 21:46:35 UTC 2021) x86_64
+Compiler: GCC 9.2
+ext2fs lib: 1.45.5, ntfs lib: libntfs-3g, reiserfs lib: none, ewf lib: none, curses lib: ncurses 6.1
+User is not root!
+Hard disk list
+
+
+TestDisk exited normally.
+Using locale 'es_ES.UTF-8'.
+
+
+Thu Apr 22 11:32:35 2021
+Command line: TestDisk /debug
+
+TestDisk 7.1, Data Recovery Utility, July 2019
+Christophe GRENIER <grenier@cgsecurity.org>
+https://www.cgsecurity.org
+OS: Linux, kernel 5.8.0-50-generic (#56~20.04.1-Ubuntu SMP Mon Apr 12 21:46:35 UTC 2021) x86_64
+Compiler: GCC 9.2
+ext2fs lib: 1.45.5, ntfs lib: libntfs-3g, reiserfs lib: none, ewf lib: none, curses lib: ncurses 6.1
+/dev/sda: LBA, HPA, LBA48, DCO support
+/dev/sda: size       1953525168 sectors
+/dev/sda: user_max   1953525168 sectors
+/dev/sda: native_max 1953525168 sectors
+/dev/sda: dco        1953525168 sectors
+Warning: can't get size for Disk /dev/mapper/control - 0 B - 0 sectors, sector size=512
+Warning: can't get size for Disk /dev/loop19 - 0 B - 0 sectors, sector size=512
+Hard disk list
+Disk /dev/sda - 1000 GB / 931 GiB - CHS 121601 255 63, sector size=512 - TOSHIBA MQ01ABD100, S/N:Z6EHSA1HS, FW:AX0R5J
+Disk /dev/loop0 - 103 MB / 99 MiB - 203056 sectors (RO), sector size=512
+Disk /dev/loop1 - 9519 KB / 9296 KiB - 18592 sectors (RO), sector size=512
+Disk /dev/loop10 - 143 KB / 140 KiB - 280 sectors (RO), sector size=512
+Disk /dev/loop11 - 67 MB / 64 MiB - 131792 sectors (RO), sector size=512
+Disk /dev/loop12 - 116 MB / 111 MiB - 227904 sectors (RO), sector size=512
+Disk /dev/loop13 - 152 MB / 145 MiB - 298104 sectors (RO), sector size=512
+Disk /dev/loop14 - 153 MB / 146 MiB - 299016 sectors (RO), sector size=512
+Disk /dev/loop15 - 53 MB / 51 MiB - 104496 sectors (RO), sector size=512
+Disk /dev/loop16 - 53 MB / 51 MiB - 104536 sectors (RO), sector size=512
+Disk /dev/loop17 - 33 MB / 32 MiB - 66096 sectors (RO), sector size=512
+Disk /dev/loop18 - 33 MB / 32 MiB - 66096 sectors (RO), sector size=512
+Disk /dev/loop2 - 58 MB / 55 MiB - 113592 sectors (RO), sector size=512
+Disk /dev/loop3 - 228 MB / 217 MiB - 446248 sectors (RO), sector size=512
+Disk /dev/loop4 - 9531 KB / 9308 KiB - 18616 sectors (RO), sector size=512
+Disk /dev/loop5 - 142 MB / 135 MiB - 277512 sectors (RO), sector size=512
+Disk /dev/loop6 - 104 MB / 99 MiB - 203184 sectors (RO), sector size=512
+Disk /dev/loop7 - 229 MB / 218 MiB - 448496 sectors (RO), sector size=512
+Disk /dev/loop8 - 58 MB / 55 MiB - 113560 sectors (RO), sector size=512
+Disk /dev/loop9 - 67 MB / 64 MiB - 132648 sectors (RO), sector size=512
+
+Partition table type (auto): EFI GPT
+Disk /dev/sda - 1000 GB / 931 GiB - TOSHIBA MQ01ABD100
+Partition table type: EFI GPT
+
+Interface Advanced
+hdr_size=92
+hdr_lba_self=1
+hdr_lba_alt=1953525167 (expected 1953525167)
+hdr_lba_start=34
+hdr_lba_end=1953525134
+hdr_lba_table=2
+hdr_entries=128
+hdr_entsz=128
+check_part_gpt failed for partition
+ 3 P MS Reserved              1128448    1161215      32768 [Microsoft reserved partition]
+ 1 P Windows Recovery Env        2048     923647     921600 [Basic data partition]
+ 2 P EFI System                923648    1128447     204800 [EFI system partition]
+ 3 P MS Reserved              1128448    1161215      32768 [Microsoft reserved partition]
+ 4 P MS Data                  1161216 1820615110 1819453895 [Basic data partition]
+     NTFS, blocksize=4096, 931 GB / 867 GiB
+ 6 P Linux filesys. data   1820616704 1952442367  131825664
+ 5 P Windows Recovery Env  1952442368 1953521663    1079296
+
+TestDisk exited normally.
