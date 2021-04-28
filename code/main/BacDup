@@ -131,9 +131,6 @@ subparser_search = subparsers.add_parser(
 in_out_search = subparser_search.add_argument_group("Input/Output")
 in_out_search.add_argument("-i", "--input_folder", help="Input folder containing project information.", required= not any(elem in help_options for elem in sys.argv))
 
-parameters_search_group = subparser_search.add_argument_group("Parameters")
-parameters_search_group.add_argument("--pseudo", action="store_true", default=False, help="Whether to use pseudogenes or not. [Default: False]")
-
 config_search = subparser_search.add_argument_group("Configuration")
 config_search.add_argument("--detached", action="store_true", help="Isolated mode. Provide a unique path for annotation file o several using --batch option. --input_folder becomes the output folder. See additional information in --detached_mode_help")
 config_search.add_argument("--debug", action="store_true", default=False)
