@@ -265,7 +265,8 @@ def NCBI_get_info_GenbankID(data_folder, acc_ID, debug, assembly_level_given ='c
                      groups=entry_tried)
         info = ncbi_genome_download.core.select_candidates(ngd_config)
         if info:
-            debug_message("It worked!", color="yellow")
+            if debug:
+                debug_message("It worked!", color="yellow")
             return(entry_tried)
         
     raise "**** ERROR: Something happen while connecting to NCBI... ***"

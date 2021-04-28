@@ -145,7 +145,7 @@ def get_GenBank_ids(data_folder, taxID_list, random_k, debug, assembly_level_giv
         debug_message("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
         
     ##
-    return(list_entries)
+    return(list_entries, list(dict_entries.keys()))
 
 
 ######################################################################

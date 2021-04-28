@@ -173,7 +173,7 @@ def parse_information(arg_dict, df_accID, outdir):
         if (not HCGB.functions.files_functions.is_non_zero_file(parse_timestamp) and not HCGB.functions.files_functions.is_non_zero_file(input_timestamp)):
         
             ## TODO: Set threads to use in parallel
-            process_OK = parse_annot_file(sample, df_accID.loc[sample, 'annot_file'], dict_parse_folders[sample], arg_dict.debug, df_accID.loc[sample, 'genome'])
+            process_OK = parse_annot_file(sample, folder_input, df_accID.loc[sample, 'annot_file'], dict_parse_folders[sample], arg_dict.debug, df_accID.loc[sample, 'genome'])
             
             if (process_OK):
             
@@ -189,8 +189,7 @@ def parse_information(arg_dict, df_accID, outdir):
                 ## print time stamp
                 time_functions.print_time_stamp(parse_timestamp)
             else:
-                
-                print("- Some error occurred for sample %s while parsing input options" %sample)
+                print(colored("\t+ Some error occurred for sample %s while parsing input options" %sample, 'red'))
                 
                 ## print time stamp
                 time_functions.print_time_stamp(os.path.join(folder_input, '.fail'))
@@ -216,7 +215,7 @@ def input_help():
     
     
 #############################
-def parse_annot_file(name, annot_file, output_path, Debug, ref_file=""):
+def parse_annot_file(name, folder_out_input, annot_file, output_path, Debug, ref_file=""):
     """
     This functions checks for each annotation file provided type of input
     and calls appropriate parser: gbf_parser or gff_parser
@@ -241,6 +240,12 @@ def parse_annot_file(name, annot_file, output_path, Debug, ref_file=""):
         ## parse gbk or gff        
         if (format=='gbk'):
             print (colored('\t* GenBank format file:........[OK]', 'green'))
+            
+            ## TODO: print details available within GenBank:
+            # Accession, Bioproject,
+            # Reference, Authors, Title, Journal,
+            # Comment
+            
             return(gbf_parser.gbf_parser_caller(annot_file, output_path, Debug))
         
         elif(format=='gff'):
@@ -410,8 +415,7 @@ def parse_options(arg_dict):
                 debug_message('strains2get: ' + str(strains2get), 'yellow')
                 
             ## call NCBI_downloader
-            df_accID = BacDup.scripts.NCBI_downloader.NCBI_download_list(strains2get, db_folder, arg_dict.debug, 
-                                                                         arg_dict.assembly_level)
+            df_accID = BacDup.scripts.NCBI_downloader.NCBI_download_list(strains2get, db_folder, arg_dict.debug, arg_dict.assembly_level)
             
         # *************************** ##
         ## single GenBank ID
@@ -482,8 +486,7 @@ def parse_options(arg_dict):
         ## convert to list of strings
         string_info_total = [str(int) for int in string_info_total]
         
-        ## TODO
-        ## assuming all belong to same superkingdom
+        ## assume all belong to same superkingdom if children of same tax_id
         group_obtained = taxonomy_retrieval.get_superKingdom(string_info_total[0], ncbi, arg_dict.debug)
 
         #################
@@ -506,19 +509,24 @@ def parse_options(arg_dict):
         ##################################
         ## get GenBank entries selected
         ##################################
-        strains2get = taxonomy_retrieval.get_GenBank_ids(db_folder, string_info_total, int(arg_dict.k_random), 
+        (strains2get, allstrains_available) = taxonomy_retrieval.get_GenBank_ids(db_folder, string_info_total, int(arg_dict.k_random), 
                                                           arg_dict.debug, assembly_level_given=arg_dict.assembly_level,
                                                           group_given=group_obtained, section_given=arg_dict.section)
 
-        ## TODO
-        ## print list and dictionary of possible and selected taxIDs 
-        #HCGB.functions.main_functions.printList2file("./out_file.txt", string_info)
-        #HCGB.functions.main_functions.printDictionary2file("./out_file.txt", string_info)
-
+        ## print list and dictionary of possible and selected taxIDs
+        outdir = os.path.abspath(arg_dict.output_folder)
+        final_dir = HCGB.functions.files_functions.create_subfolder("info", outdir)
+        input_info_dir = HCGB.functions.files_functions.create_subfolder("input", outdir)
+        HCGB.functions.main_functions.printList2file(os.path.join(input_info_dir, 'Downloaded.txt'), strains2get)
+        HCGB.functions.main_functions.printList2file(os.path.join(input_info_dir, 'all_entries.txt'), allstrains_available)
+        
+        ## save into file
+        file_info = os.path.join(input_info_dir, 'info.txt')
+        
         #################
         ## call NCBI_downloader
         #################
-        df_accID = BacDup.scripts.NCBI_downloader.NCBI_download_list(strains2get, db_folder, arg_dict.debug)
+        df_accID = BacDup.scripts.NCBI_downloader.NCBI_download_list(strains2get, db_folder, arg_dict.debug, arg_dict.assembly_level)
 
     ## --------------------------------------- ##
     ## Previous BacDup analysis folder

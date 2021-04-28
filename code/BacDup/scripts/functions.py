@@ -72,6 +72,8 @@ def get_gbk_information(gbk, debug):
             organism = record.annotations['source']
             taxonomy = record.annotations['taxonomy']
     
+    ## TODO: get plasmid information
+    
     ##
     return(taxonomy, organism)
 
