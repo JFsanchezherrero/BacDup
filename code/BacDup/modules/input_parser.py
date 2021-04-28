@@ -119,7 +119,7 @@ def run_input(arg_dict):
     start_time_partial = time_functions.timestamp(start_time_partial)
     
     ## parse information accordingly
-    parse_information(df_accID, outdir)
+    parse_information(arg_dict, df_accID, outdir)
 
     ### report generation
     HCGB.functions.aesthetics_functions.boxymcboxface("Summarizing input files")

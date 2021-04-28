@@ -37,7 +37,7 @@ def fasta_seq(filename, debug):
         fasta_sequences = SeqIO.parse(open(filename), "fasta")
         for fasta in fasta_sequences:
             sequences = str(fasta.seq)
-            proteindna = seqs["dna"].search(sequences)
+            dna = seqs["dna"].search(sequences)
             protein = seqs["protein"].search(sequences)
             
             ## debug messages

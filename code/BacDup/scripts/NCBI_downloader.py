@@ -252,10 +252,6 @@ def NCBI_get_info_GenbankID(data_folder, acc_ID, debug, assembly_level_given ='c
     ## import module and class
     import ncbi_genome_download
     from ncbi_genome_download.config import NgdConfig
-    
-    ## FIXME
-    ## blinded NCBI search
-    
     tries = ['bacteria', 'archaea']
     for entry_tried in tries:
         if debug:
