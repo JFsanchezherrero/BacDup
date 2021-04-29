@@ -12,3 +12,4 @@ wget
 ncbi-genome-download
 ete3
 six
+scipy

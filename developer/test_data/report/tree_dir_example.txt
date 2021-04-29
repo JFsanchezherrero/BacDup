@@ -1,37 +1,80 @@
 test_results/
 ├── data
 │   ├── GCA_000027125.1
+│   │   ├── dups
+│   │   │   ├── .annot_success
+│   │   │   ├── .filter_success
+│   │   │   ├── dup_annot.csv
+│   │   │   ├── filtered_results.csv
+│   │   │   └── info_dup.csv
 │   │   ├── input
 │   │   │   ├── .success
 │   │   │   ├── GCA_000027125.1_ASM2712v1_genomic.gbff -> ##SYMBOLIC LINK TO ORIGINAL FILE
 │   │   │   └── info.csv
-│   │   └── parse
-│   │       ├── .success
-│   │       ├── annot_df.csv
-│   │       ├── length_df.csv
-│   │       └── proteins.fa
+│   │   ├── parse
+│   │   │   ├── .success
+│   │   │   ├── annot_df.csv
+│   │   │   ├── length_df.csv
+│   │   │   └── proteins.fa
+│   │   └── search
+│   │       ├── .blast_success
+│   │       ├── .db_success
+│   │       ├── BLAST_raw_results.tsv
+│   │       ├── GCA_000027125.1_db.phr
+│   │       ├── GCA_000027125.1_db.pin
+│   │       └── GCA_000027125.1_db.psq
 │   ├── GCF_000026245.1
+│   │   ├── dups
+│   │   │   ├── .annot_success
+│   │   │   ├── .filter_success
+│   │   │   ├── dup_annot.csv
+│   │   │   ├── filtered_results.csv
+│   │   │   └── info_dup.csv
 │   │   ├── input
 │   │   │   ├── .success
 │   │   │   ├── GCF_000026245.1_ASM2624v1_genomic.gbff -> ##SYMBOLIC LINK TO ORIGINAL FILE
 │   │   │   └── info.csv
-│   │   └── parse
-│   │       ├── .success
-│   │       ├── annot_df.csv
-│   │       ├── length_df.csv
-│   │       └── proteins.fa
+│   │   ├── parse
+│   │   │   ├── .success
+│   │   │   ├── annot_df.csv
+│   │   │   ├── length_df.csv
+│   │   │   └── proteins.fa
+│   │   └── search
+│   │       ├── .blast_success
+│   │       ├── .db_success
+│   │       ├── BLAST_raw_results.tsv
+│   │       ├── GCF_000026245.1_db.phr
+│   │       ├── GCF_000026245.1_db.pin
+│   │       └── GCF_000026245.1_db.psq
 │   └── GCF_000299455.1
+│       ├── dups
+│       │   ├── .annot_success
+│       │   ├── .filter_success
+│       │   ├── dup_annot.csv
+│       │   ├── filtered_results.csv
+│       │   └── info_dup.csv
 │       ├── input
 │       │   ├── .success
 │       │   ├── GCF_000299455.1_ASM29945v1_genomic.gbff -> ##SYMBOLIC LINK TO ORIGINAL FILE
 │       │   └── info.csv
-│       └── parse
-│           ├── .success
-│           ├── annot_df.csv
-│           ├── length_df.csv
-│           └── proteins.fa
+│       ├── parse
+│       │   ├── .success
+│       │   ├── annot_df.csv
+│       │   ├── length_df.csv
+│       │   └── proteins.fa
+│       └── search
+│           ├── .blast_success
+│           ├── .db_success
+│           ├── BLAST_raw_results.tsv
+│           ├── GCF_000299455.1_db.phr
+│           ├── GCF_000299455.1_db.pin
+│           └── GCF_000299455.1_db.psq
 ├── info
 └── report
+    ├── dups
+    │   └── info_annot.csv
     └── input
         └── info.csv
+
+
 

@@ -14,8 +14,10 @@ import os
 import sys
 import pandas as pd
 import numpy as np
+import scipy
 from termcolor import colored
 from Bio import SeqIO, Seq
+from collections import defaultdict 
 
 import argparse
 from argparse import ArgumentParser
@@ -26,6 +28,182 @@ import HCGB.functions.time_functions as time_functions
 
 import BacDup
 import BacDup.scripts.functions as BacDup_functions
+
+################################################################################
+def get_dup_stats(sample, dup_annot_df, annot_table, debug):
+    '''Generate some statistics for the duplicated analyis
+    '''
+    
+    data2add = pd.DataFrame(columns=BacDup_functions.columns_dup_table())
+    
+    ## add info for each
+    total_dupGroups = len(dup_annot_df["dup_id"].unique())
+    total_dups = dup_annot_df.shape[0]
+    total_prots = annot_table.shape[0]
+     
+    ## get some information
+    
+    # eg. transposases
+    transposases_count = dup_annot_df[ dup_annot_df['product'].str.contains('transposa')].shape[0]
+    
+    # phage
+    phage_count = dup_annot_df[ dup_annot_df['product'].str.contains('phage')].shape[0]
+    
+    # hypothetical
+    hypothetical_count = dup_annot_df[ dup_annot_df['product'].str.contains('hypothetical')].shape[0]
+    
+    # pseudo
+    pseudo_count = dup_annot_df[ dup_annot_df['pseudo']==True].shape[0]
+    
+    # etc
+        
+    ## group & count
+    dup_annot_df["count_dups"] = dup_annot_df.groupby("dup_id")["dup_id"].transform("count")
+    
+    ## 
+    list_entries = dup_annot_df["count_dups"].to_list()
+    list_entries = [x for x in list_entries if x==x] ## remove NaNs
+    list_entries = [int(x) for x in list_entries] ## convert to numbers
+    
+    ## get distribution statistics
+    ## get median, SD duplicates/group
+    ## get biggest group
+    d = scipy.stats.describe(list_entries)
+    df = pd.DataFrame([d], columns=d._fields)
+    #"nobs", "minmax", "mean", "variance", "skewness" , "kurtosis",
+    # d[0]    d[1]       d[2]    d[3]        d[4]        d[5]
+    
+    ## convert to strings to save
+    list_entries = [str(x) for x in list_entries] 
+    
+    mean = "{0:.3g} ".format(d[2])
+    
+    known_genes_entries = dup_annot_df["gene"].to_list()
+    known_genes_entries = [x for x in known_genes_entries if x==x] ## remove NaNs
+    len_known_genes_entries = len(known_genes_entries)
+    
+    print(f"""
+    \t\t+ Sample: {sample} 
+    \t\t {total_dups} proteins duplicated ({total_dupGroups} groups)
+    \t\t {mean} proteins/group 
+    \t\t Min/max: {d[1][0]}/{d[1][1]} proteins/group
+    \t\t Annotation:
+    \t\t  |- {len_known_genes_entries} characterized genes;
+    \t\t  |- {phage_count} phage proteins;
+    \t\t  |- {transposases_count} transposases proteins;
+    \t\t  |- {hypothetical_count} hypothetical proteins;
+    \t\t  |- {pseudo_count} pseudogenes;
+    """) 
+
+    ## fill dataframe
+    data2add.loc[sample] = [total_dupGroups, total_dups, total_prots, 
+                            len_known_genes_entries, phage_count, 
+                            transposases_count, hypothetical_count,
+                            pseudo_count,
+                            d[0], d[1], d[2], d[3], d[4], d[5],
+                            ":".join(list_entries)]
+    return(data2add)
+
+################################################################################
+def get_dupannot(sample, blast_results_df, annot_table_file, debug):
+    '''Get an annotation information for duplicated proteins'''
+    
+    ## debug messages
+    if debug:
+        debug_message('get_dupannot function', 'yellow')
+        debug_message('blast_results_df: ', 'yellow')
+        print (blast_results_df)
+        debug_message('annot_table_file: ' + annot_table_file, 'yellow')
+        
+    #get duplicated protein list
+    qseqid = list(blast_results_df["qseqid"])
+    sseqid =list(blast_results_df["sseqid"])
+    
+    qseqid.extend(sseqid) ## Fix me
+    prot_id = list(set(qseqid))
+    
+    ## gets annotation
+    annot_table = HCGB.functions.main_functions.get_data(annot_table_file, ',', "index_col=0")
+    
+    #get filtered_annot table
+    filtered_annot = annot_table.loc[prot_id]
+
+    ## pseudogenes
+    print ("+ Pseudogenes would be used in the analysis and flagged appropriately...")
+    
+    ###################################
+    ## Get duplicate groups    
+    ###################################
+    # 1st round
+    relations_dict = defaultdict(list) 
+    for index, row in blast_results_df.iterrows():
+        relations_dict[row['qseqid']].append(str(row['sseqid']))
+    
+    ## debug messages
+    if debug:
+        debug_message('relations_dict: ', 'yellow')
+        print (relations_dict)
+        
+    ## 2nd round
+    new_relations_dict = defaultdict(list)
+    dups=0
+    for key, value in relations_dict.items():
+        stop=False
+        for dup_id, new_value in new_relations_dict.items():
+            if key in new_value:
+                stop=True
+        if not stop:
+            for key2, value2 in relations_dict.items():
+                if (key == key2):
+                    continue
+                else:
+                    if (key2 in value): 
+                        for i in value2: 
+                            if i not in value: 
+                                value.append(str(i))
+            dups += 1
+            value.append(str(key))
+            new_relations_dict[str(dups)] = value
+            
+            ## debug messages
+            if debug:
+                print()
+                debug_message("dups: " + str(dups), 'yellow')
+                debug_message("key: " + key, 'yellow')
+                print(value)
+                print()
+                
+    ## debug messages
+    if debug:
+        debug_message('new_relations_dict: ', 'yellow')
+        print (new_relations_dict)
+
+    ## Create data
+    filtered_annot['dup_id'] = ""
+    #df_data = pd.DataFrame(columns=('index', 'dup_id'))
+    for dup_id, new_value in new_relations_dict.items():
+        for i in new_value:
+            filtered_annot.loc[i, 'dup_id'] = dup_id
+
+    ## debug messages
+    if debug:
+        debug_message('filtered_annot: ', 'yellow')
+        HCGB.functions.main_functions.print_all_pandaDF(filtered_annot)
+        
+    #filtered_annot = filtered_annot.drop(columns='index')
+    
+    ## debug messages
+    if debug:
+        debug_message('filtered_annot: ', 'yellow')
+        print (filtered_annot)
+        
+    ## get some statistics
+    data2add = get_dup_stats(sample, filtered_annot, annot_table, debug)
+
+    ## return         
+    return(filtered_annot, data2add)
+
+
 
 ################################################################################
 def create_blast_results(sample, fasta_file, outdir, debug):

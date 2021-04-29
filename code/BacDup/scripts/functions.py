@@ -7,6 +7,14 @@ from HCGB.functions.aesthetics_functions import debug_message
 from Bio import SeqIO
 
 ################################################################################
+def columns_dup_table():
+    columns = ["total_dupGroups", "total_dups", "total_prots", 
+               "genes", "phage_count", "transpo_count", "hypothetical_coun", "pseudo", 
+               "nobs", "minmax", "mean", "variance", "skewness" , "kurtosis",
+               "list_dups"]
+    return(columns)
+
+################################################################################
 def columns_rawBLAST_table():
     '''Set the columns to include in a BLAST tabular file'''
     columns = ["qseqid", "sseqid", "pident", "length",
@@ -63,6 +71,8 @@ def get_gbk_information(gbk, debug):
                 
             organism = record.annotations['source']
             taxonomy = record.annotations['taxonomy']
+    
+    ## TODO: get plasmid information
     
     ##
     return(taxonomy, organism)

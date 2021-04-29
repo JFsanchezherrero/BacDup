@@ -252,10 +252,6 @@ def NCBI_get_info_GenbankID(data_folder, acc_ID, debug, assembly_level_given ='c
     ## import module and class
     import ncbi_genome_download
     from ncbi_genome_download.config import NgdConfig
-    
-    ## FIXME
-    ## blinded NCBI search
-    
     tries = ['bacteria', 'archaea']
     for entry_tried in tries:
         if debug:
@@ -269,7 +265,8 @@ def NCBI_get_info_GenbankID(data_folder, acc_ID, debug, assembly_level_given ='c
                      groups=entry_tried)
         info = ncbi_genome_download.core.select_candidates(ngd_config)
         if info:
-            debug_message("It worked!", color="yellow")
+            if debug:
+                debug_message("It worked!", color="yellow")
             return(entry_tried)
         
     raise "**** ERROR: Something happen while connecting to NCBI... ***"
