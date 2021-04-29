@@ -1,3 +1,7 @@
+install.packages("ggplot2")
+require(ggplot2)
+
+
 ## Initialize the reports locations and the log
 report.directory <- "RnBeads_report_testing"
 if (!rnb.initialize.reports(report.directory)) {

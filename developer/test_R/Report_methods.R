@@ -84,7 +84,7 @@ complete.report <- function(report, report.type = "report") {
   
   ## Add list of references to the report
   if (length(report@references) != 0) {
-    report <- rnb.add.section(report, "References", NULL)
+    report <-  bdp .add.section(report, "References", NULL)
     reftexts <- report@references
     reftexts <- paste0("<a id=\"ref", 1:length(reftexts), "\">", reftexts, "</a>")
     rnb.add.list(report, as.list(reftexts), type = "o")
@@ -309,7 +309,7 @@ setMethod("initialize", "Report",
                 stop(paste("directory", dname, "cannot be created"))
               }
               ## Copy configuration files
-              cfiles <- c("arrow_down.png", "arrow_right.png", "RnBeads.png", "pdf_active.png", "pdf_inactive.png",
+              cfiles <- c("arrow_down.png", "arrow_right.png", "BacDup.png", "pdf_active.png", "pdf_inactive.png",
                           "report.css", "report.js")
               cfiles <- system.file(file.path("extdata", cfiles), package = "RnBeads", mustWork = TRUE)
               if (!all(file.copy(cfiles, dname))) {
@@ -337,7 +337,7 @@ setMethod("initialize", "Report",
             }
             wline(c("<script src=\"", dir.configuration, "report.js\" type=\"text/javascript\"></script>"), 1)
             wline("</head>\n")
-            wline(c("<body style=\"background:url(", dir.configuration, "RnBeads.png) no-repeat 5px 25px;\">\n"))
+            wline(c("<body style=\"background:url(", dir.configuration, "BacDup.png) no-repeat 5px 25px;\">\n"))
             wline(c("<h1>", title, "</h1>\n"))
             .Object
           }
@@ -826,7 +826,7 @@ bdp.add.tables <- function(report, tables, setting.names, selected.table = 1L, i
   
   ## Identify name elements
   elements <- strsplit(names(tables), "_", fixed = TRUE)
-  element.values <- rnbreport.get.element.values(elements, length(setting.names))
+  element.values <-  bdpreport.get.element.values(elements, length(setting.names))
   if (is.null(element.values)) {
     stop("inconsistent table names")
   }
@@ -853,7 +853,7 @@ bdp.add.tables <- function(report, tables, setting.names, selected.table = 1L, i
   for (i in 1:length(tables)) {
     txt <- c(" style=\"display:", ifelse(i == selected.table, "block", "none"), "\"")
     wline(c("<div id=\"tab", n, "_", names(tables)[i], "\"", txt, ">"), 1)
-    rnb.add.table(report, tables[[i]], indent = indent, ...)
+     bdp.add.table(report, tables[[i]], indent = indent, ...)
     wline("</div>\n", 1)
   }
   
@@ -864,26 +864,23 @@ bdp.add.tables <- function(report, tables, setting.names, selected.table = 1L, i
 
 ########################################################################################################################
 
-# rnb.add.figure
+# bdp.add.figure
 #
 # Generates HTML code for a figure in the specified report. A figure is a collection of images (plots), of which only
 # one is visible at any given moment.
 #
 #  report         Report to write the text to.
-#  description    Human-readable description of the figure. This must be a non-empty character} vector. The
+#  description    Human-readable description of the figure. This must be a non-empty character vector. The
 #                       elements of this vector are concatenated without a separator to form the full description.
-#  report.plots   Object of type \linkS4class{ReportPlot}}, or a list of such objects.
+#  report.plots   Object of type ReportPlot, or a list of such objects.
 #  setting.names  List of plot file element descriptors. Every variable elements in the plot file names must be
 #                       included in this list. Set this to empty list if no variable elements are present, that is, if
 #                       the figure should present a single report plot.
 #  selected.image Index of plot to be initially selected in the figure.
-# @return The modified report.
-#
-# @seealso \link{rnb.add.tables}} for adding a listing of tables; \linkS4class{Report}} for other functions
-#   adding contents to an HTML report
+
 # @author Yassen Assenov
-# @export
-rnb.add.figure <- function(report, description, report.plots, setting.names = list(), selected.image = as.integer(1)) {
+
+bdp.add.figure <- function(report, description, report.plots, setting.names = list(), selected.image = as.integer(1)) {
   
   if (!inherits(report, "Report")) {
     stop("invalid value for report")
@@ -935,7 +932,7 @@ rnb.add.figure <- function(report, description, report.plots, setting.names = li
   ## Get the file name elements
   fnames <- sapply(report.plots, slot, "fname")
   felements <- strsplit(fnames, "_", fixed = TRUE)
-  element.values <- rnbreport.get.element.values(felements, length(setting.names))
+  element.values <-  bdpreport.get.element.values(felements, length(setting.names))
   if (is.null(element.values)) {
     stop("inconsistent figure file names")
   }
@@ -1005,28 +1002,17 @@ rnb.add.figure <- function(report, description, report.plots, setting.names = li
 
 ########################################################################################################################
 
-# rnb.add.reference
+#  bdp.add.reference
 #
 # Adds a reference item to the given report.
 #
 #  report Report to add a reference item to.
-#  txt    Text of the reference in the form of a non-empty character} vector. The elements of this vector
+#  txt    Text of the reference in the form of a non-empty character vector. The elements of this vector
 #               are concatenated without a separator.
-# @return The modified report.
-#
-# @examples
-# \donttest{
-# report <- createReport("example.html", "Example", init.configuration = TRUE)
-# txt.reference <- c("Bird A. ", "<i>Nucleic Acids Res.</i> <b>8</b> (1980)")
-# report <- rnb.add.reference(report, txt.reference)
-# txt <- c("This was shown in ", rnb.get.reference(report, txt.reference), ".")
-# rnb.add.paragraph(report, txt)
-# }
-# @seealso \link{rnb.get.reference}} for adding citations in the report's text; \linkS4class{Report}} for
-#   other functions adding contents to an HTML report
+
 # @author Yassen Assenov
-# @export
-rnb.add.reference <- function(report, txt) {
+
+ bdp.add.reference <- function(report, txt) {
   if (!inherits(report, "Report")) {
     stop("invalid value for report")
   }
@@ -1039,29 +1025,20 @@ rnb.add.reference <- function(report, txt) {
 
 ########################################################################################################################
 
-# rnb.get.reference
+#  bdp.get.reference
 #
 # Creates a string that points to the given reference item in the specified report.
 #
 #  report Report that contains the reference to be cited.
 #  txt    Text of the reference in the form of a non-empty character} vector. This reference must already
 #               added to the report.
-# @return Citation of the reference item (including a link) in the form of a one-element character} vector. If
+# @return Citation of the reference item (including a link) in the form of a one-element character vector. If
 #         the specified reference item is not found in the report, this method returns an empty string.
 #
-# @examples
-# \donttest{
-# report <- createReport("example.html", "Example", init.configuration = TRUE)
-# txt.reference <- c("Bird A. ", "<i>Nucleic Acids Res.</i> <b>8</b> (1980)")
-# report <- rnb.add.reference(report, txt.reference)
-# txt <- c("This was shown in ", rnb.get.reference(report, txt.reference), ".")
-# rnb.add.paragraph(report, txt)
-# }
-# @seealso \link{rnb.add.reference}} for adding a reference item to a report; \linkS4class{Report}} for
-#   other functions adding contents to an HTML report
+
 # @author Yassen Assenov
-# @export
-rnb.get.reference <- function(report, txt) {
+
+ bdp.get.reference <- function(report, txt) {
   if (!inherits(report, "Report")) {
     stop("invalid value for report")
   }
@@ -1096,14 +1073,7 @@ if (!isGeneric("off")) {
 #                      internally. Setting this to TRUE} does not guarantee that the method never stops with an
 #                      error.
 #
-# @return The closed object, invisibly.
-#
-# @export
-# @docType methods
-# @rdname off-methods
-# @aliases off
-# @aliases off,Report-method
-# @aliases off,ReportPlot-method
+
 setMethod("off", "Report",
           function(.Object) {
             return(invisible(complete.report(.Object)))
