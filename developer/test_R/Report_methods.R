@@ -84,7 +84,7 @@ complete.report <- function(report, report.type = "report") {
   
   ## Add list of references to the report
   if (length(report@references) != 0) {
-    report <-  bdp .add.section(report, "References", NULL)
+    report <-  bdp.add.section(report, "References", NULL)
     reftexts <- report@references
     reftexts <- paste0("<a id=\"ref", 1:length(reftexts), "\">", reftexts, "</a>")
     rnb.add.list(report, as.list(reftexts), type = "o")
@@ -189,9 +189,9 @@ bdp.initialize.reports <- function(dir.reports, dir.configuration = "configurati
   }
   ## Copy configuration files
     ##TODO crear una imagen BacDup
-  cfiles <- c("arrow_down.png", "arrow_right.png", "BacDup.png", "pdf_active.png", "pdf_inactive.png", "report.css",
+  cfiles <- c("arrow_down.png", "arrow_right.png", "pdf_active.png", "pdf_inactive.png", "report.css",
               "report.js")
-  cfiles <- system.file(file.path("extdata", cfiles), package = "BacDup", mustWork = TRUE)
+  #cfiles <- system.file(file.path("extdata", cfiles), mustWork = TRUE)
   return(all(file.copy(cfiles, dname)))
 }
 
@@ -311,7 +311,7 @@ setMethod("initialize", "Report",
               ## Copy configuration files
               cfiles <- c("arrow_down.png", "arrow_right.png", "BacDup.png", "pdf_active.png", "pdf_inactive.png",
                           "report.css", "report.js")
-              cfiles <- system.file(file.path("extdata", cfiles), package = "RnBeads", mustWork = TRUE)
+              cfiles <- system.file(file.path("extdata", cfiles),  mustWork = TRUE)
               if (!all(file.copy(cfiles, dname))) {
                 stop(paste("configuration could not be initialized in", dname))
               }

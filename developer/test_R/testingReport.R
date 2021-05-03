@@ -1,10 +1,18 @@
-install.packages("ggplot2")
 require(ggplot2)
+
+source("report_class.R")
+source("Report_methods.R")
+source("ReportPlot_class.R")
+source("ReportPlot_methods.R")
+source("logger.R")
+source("options.R")
+
+
 
 
 ## Initialize the reports locations and the log
-report.directory <- "RnBeads_report_testing"
-if (!rnb.initialize.reports(report.directory)) {
+report.directory <- "BacDup_report_testing"
+if (!bdp.initialize.reports(report.directory)) {
   stop(paste("Could not initialize reports in", report.directory))
 }
 logfile <- file.path(report.directory, "quality.log")
@@ -17,14 +25,14 @@ logger.status("Initialized the example report")
 rf1 <- "Autores. Titulo. Revista número (año) pá-ginas"
 rf2 <- c("Autores. ", "Título. ",
          "revista número (año) pág-inas")
-report <- rnb.add.reference(report, rf1)
-report <- rnb.add.reference(report, rf2)
+report <- bdp.add.reference(report, rf1)
+report <- bdp.add.reference(report, rf2)
 
 ## Add report sections
-txt <- c("This is example report ", rnb.get.reference(report, rf1), ". It is used in testing.")
-report <- rnb.add.section(report, "Introduction", txt)
-txt <- c("Some background knowledge is required ", rnb.get.reference(report, rf2), ".")
-report <- rnb.add.section(report, "Background", txt, level = 2)
+txt <- c("This is example report ", bdp.get.reference(report, rf1), ". It is used in testing.")
+report <- bdp.add.section(report, "Introduction", txt)
+txt <- c("Some background knowledge is required ", bdp.get.reference(report, rf2), ".")
+report <- bdp.add.section(report, "Background", txt, level = 2)
 
 ## Create plots
 doplot <- function(type = "p", ...) {
@@ -68,11 +76,11 @@ description <- c("Example figure of four data points displayed in different plot
                  "The horizontal axis depicts methylation &beta; value, and the vertical axis represents a measurement.",
                  "All values and colors were selected randomly.")
 description <- paste(description, collapse = " ")
-report <- rnb.add.section(report, "The Figure", "Here comes <a href=\"#fig1image\">Figure 1</a>:")
-report <- rnb.add.figure(report, description, report.plots, setting.names)
+report <- bdp.add.section(report, "The Figure", "Here comes <a href=\"#fig1image\">Figure 1</a>:")
+report <- bdp.add.figure(report, description, report.plots, setting.names)
 
 ## Close the report
-report <- rnb.add.section(report, "Summary", "The generation of this report was successful.")
+report <- bdp.add.section(report, "Summary", "The generation of this report was successful.")
 off(report)
 logger.info("Closed the example report")
 
