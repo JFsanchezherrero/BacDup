@@ -124,14 +124,14 @@ def run_search(arg_dict):
     
     ## for each sample
     dict_search_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, pd_samples_retrieved, "search", arg_dict.debug)
-    annot_search_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, pd_samples_retrieved, "dups", arg_dict.debug)
+    dict_dup_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, pd_samples_retrieved, "dups", arg_dict.debug)
 
     ## create results
     data2add = pd.DataFrame(columns=BacDup_functions.columns_dup_table())
     for sample, folder in dict_search_folders.items():
         
-        annot_timestamp = os.path.join(annot_search_folders[sample], '.annot_success')
-        dup_annot_file = os.path.join(annot_search_folders[sample], 'dup_annot.csv')
+        annot_timestamp = os.path.join(dict_dup_folders[sample], '.annot_success')
+        dup_annot_file = os.path.join(dict_dup_folders[sample], 'dup_annot.csv')
         
         ## annotation
         annot_table_file = pd_samples_retrieved.loc[sample, 'annot_table']
@@ -144,10 +144,10 @@ def run_search(arg_dict):
             filtered_data = dup_searcher.filter_data(sample, file_data, format, arg_dict.pident, arg_dict.evalue, arg_dict.percentage, arg_dict.bitscore, folder, arg_dict.debug)
             
             ## timestamps 
-            filter_timestamp = os.path.join(annot_search_folders[sample], '.filter_success')
+            filter_timestamp = os.path.join(dict_dup_folders[sample], '.filter_success')
             if (not HCGB.functions.files_functions.is_non_zero_file(filter_timestamp)):
                 #save results as a .csv file
-                sort_csv = os.path.abspath(os.path.join(annot_search_folders[sample], 'filtered_results.csv'))
+                sort_csv = os.path.abspath(os.path.join(dict_dup_folders[sample], 'filtered_results.csv'))
                 filtered_data.to_csv(sort_csv, header=True, index=False)
                 
                 ## print time stamp
@@ -160,7 +160,7 @@ def run_search(arg_dict):
             (dup_annot_df, data2add_entry) = dup_searcher.get_dupannot(sample, filtered_data, annot_table_file, arg_dict.debug)
             
             ##
-            info_dup_file = os.path.join(annot_search_folders[sample], 'info_dup.csv')
+            info_dup_file = os.path.join(dict_dup_folders[sample], 'info_dup.csv')
             data2add_entry.to_csv(info_dup_file, header=True, index=False)
             
             ## save into file
