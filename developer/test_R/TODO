@@ -2,3 +2,5 @@ TODO
 
 Crear una carpeta somewhere con los archivos de la carpeta configuración
 Report_methods línea 194
+Report_methods linea 104 -> decidir qué texto aparece en el html
+generar el logger

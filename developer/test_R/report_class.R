@@ -61,7 +61,6 @@ setClass("Report",
                                opensections = rep(0L, 3L),
                                figures = 0L,
                                tables = 0L,
-                               references = character()),
-         package = "RnBeads")
+                               references = character()))
 
 ## TODO ## Check deprecated arguments: representation, prototype, package

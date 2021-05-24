@@ -52,18 +52,18 @@ setMethod("initialize", "ReportPlot",
             validObject(.Object)
             if (!skip.dev.setup){
               if (create.pdf) {
-                validate.dir(.Object@dir.pdf)
+                ##validate.dir(.Object@dir.pdf)
                 fn <- file.path(.Object@dir.pdf, paste0(fname, ".pdf"))
                 pdf(fn, width = width, height = height)
               } else if (high.png > 0) {
-                validate.dir(.Object@dir.png.high)
+                ##validate.dir(.Object@dir.png.high)
                 if (low.png > 0 && .Object@dir.png.high == .Object@dir.png.low) {
                   fname <- paste0(fname, "_high_resolution")
                 }
                 fn <- file.path(.Object@dir.png.high, paste0(fname, ".png"))
                 png(fn, width = width * high.png, height = height * high.png)
               } else if (low.png > 0) {
-                validate.dir(.Object@dir.png.low)
+                ##validate.dir(.Object@dir.png.low)
                 fn <- file.path(.Object@dir.png.low, paste0(fname, ".png"))
                 png(fn, width = width * low.png, height = height * low.png)
               } else {
@@ -144,7 +144,7 @@ setMethod("off", "ReportPlot",
             }
             if (.Object@create.pdf) {
               if (.Object@high.png > 0) {
-                validate.dir(.Object@dir.png.high)
+                #validate.dir(.Object@dir.png.high)
                 fname <- .Object@fname
                 if (.Object@low.png > 0 && .Object@dir.png.high == .Object@dir.png.low) {
                   fname <- paste0(fname, "_high_resolution")
@@ -153,12 +153,12 @@ setMethod("off", "ReportPlot",
                 convert.f(fname, res = .Object@high.png, fonts = c("Helvetica", "sans"))
               }
               if (.Object@low.png > 0) {
-                validate.dir(.Object@dir.png.low)
+                #validate.dir(.Object@dir.png.low)
                 fname <- file.path(.Object@dir.png.low, paste0(.Object@fname, ".png"))
                 convert.f(fname, res = .Object@low.png, fonts = c("Helvetica", "sans"))
               }
             } else if (.Object@low.png > 0 && .Object@high.png > 0) {
-              validate.dir(.Object@dir.png.low)
+              #validate.dir(.Object@dir.png.low)
               fname <- file.path(.Object@dir.png.low, paste0(.Object@fname, ".png"))
               convert.f(fname, res = .Object@low.png)
             }
@@ -288,12 +288,12 @@ setMethod("off", "ReportGgPlot",
           function(.Object,handle.errors=FALSE) {
             do.it <- function(obj){
               if (obj@create.pdf) {
-                validate.dir(obj@dir.pdf)
+                ##validate.dir(obj@dir.pdf)
                 fn <- file.path(obj@dir.pdf, paste(obj@fname, "pdf", sep = "."))
                 ggplot2::ggsave(fn,obj@ggp,width=obj@width,height=obj@height)
               }
               if (obj@high.png > 0) {
-                validate.dir(obj@dir.png.high)
+                ##validate.dir(obj@dir.png.high)
                 fname <- obj@fname
                 if (obj@low.png > 0 && obj@dir.png.high == obj@dir.png.low) {
                   fname <- paste(fname, "_high_resolution", sep = "")
@@ -302,7 +302,7 @@ setMethod("off", "ReportGgPlot",
                 ggplot2::ggsave(fn,obj@ggp,width=obj@width,height=obj@height,dpi=obj@high.png)
               }
               if (obj@low.png > 0) {
-                validate.dir(obj@dir.png.low)
+                ##validate.dir(obj@dir.png.low)
                 fn <- file.path(obj@dir.png.low, paste(obj@fname, "png", sep = "."))
                 ggplot2::ggsave(fn,obj@ggp,width=obj@width,height=obj@height,dpi=obj@low.png)
               }
