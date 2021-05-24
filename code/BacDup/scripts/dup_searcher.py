@@ -57,28 +57,8 @@ def get_dup_stats(sample, dup_annot_df, annot_table, debug):
     
     # etc
     
-    ## group & count
-    dup_annot_df["count_dups"] = dup_annot_df.groupby("dup_id")["dup_id"].transform("count")
-    
-    ## Some proteins might be orphans if for some reason they do not fulfill cutoffs with
-    ## all members of a duplicated group. That might create some groups with only 1 protein.
-    dup_annot_df = dup_annot_df[dup_annot_df["count_dups"]>1]
-    
-    ## reset dup_ids
-    df_grouped = dup_annot_df.groupby('dup_id')
-    dup_id_count=0
-    dup_annot_df_fixed = pd.DataFrame()
-    for group, df_group in df_grouped:
-        dup_id_count += 1
-        df_group['new_dup_id'] = dup_id_count
-        dup_annot_df_fixed = dup_annot_df_fixed.append(df_group)
-
-    ## remove old dup_id column
-    del dup_annot_df_fixed['dup_id']
-    dup_annot_df_fixed = dup_annot_df_fixed.rename(columns={'new_dup_id':'dup_id'})
-   
-   ## 
-    list_entries = dup_annot_df_fixed.groupby(["dup_id"]).count()['count_dups'].to_list()
+    ## create list of entries 
+    list_entries = dup_annot_df.groupby(["dup_id"]).count()['count_dups'].to_list()
     list_entries = [x for x in list_entries if x==x] ## remove NaNs
     list_entries = [int(x) for x in list_entries] ## convert to numbers
     
@@ -199,7 +179,7 @@ def get_dupannot(sample, blast_results_df, annot_table_file, debug):
     #df_data = pd.DataFrame(columns=('index', 'dup_id'))
     for dup_id, new_value in new_relations_dict.items():
         for i in new_value:
-            filtered_annot.loc[i, 'dup_id'] = dup_id
+            filtered_annot.loc[i, 'tmp_dup_id'] = dup_id
 
     ## debug messages
     if debug:
@@ -207,19 +187,37 @@ def get_dupannot(sample, blast_results_df, annot_table_file, debug):
         HCGB.functions.main_functions.print_all_pandaDF(filtered_annot)
         
     #filtered_annot = filtered_annot.drop(columns='index')
+
+    ## Check group of duplicates
+    ## group & count
+    filtered_annot["count_dups"] = filtered_annot.groupby("tmp_dup_id")["tmp_dup_id"].transform("count")
+    
+    ## Some proteins might be orphans if for some reason they do not fulfill cutoffs with
+    ## all members of a duplicated group. That might create some groups with only 1 protein.
+    filtered_annot = filtered_annot[filtered_annot["count_dups"]>1]
+    
+    ## reset dup_ids
+    df_grouped = filtered_annot.groupby('tmp_dup_id')
+    dup_id_count=0
+    dup_annot_df_fixed = pd.DataFrame()
+    for group, df_group in df_grouped:
+        dup_id_count += 1
+        df_group['dup_id'] = dup_id_count
+        dup_annot_df_fixed = dup_annot_df_fixed.append(df_group)
+    
+    ## remove old dup_id column
+    del dup_annot_df_fixed['tmp_dup_id']
     
     ## debug messages
     if debug:
-        debug_message('filtered_annot: ', 'yellow')
-        print (filtered_annot)
+        debug_message('dup_annot_df_fixed: ', 'yellow')
+        print (dup_annot_df_fixed)
         
     ## get some statistics
-    data2add = get_dup_stats(sample, filtered_annot, annot_table, debug)
+    data2add = get_dup_stats(sample, dup_annot_df_fixed, annot_table, debug)
 
     ## return         
-    return(filtered_annot, data2add)
-
-
+    return(dup_annot_df_fixed, data2add)
 
 ################################################################################
 def create_blast_results(sample, fasta_file, outdir, debug):
