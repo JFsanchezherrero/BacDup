@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="configuration/report.css" type="text/css" />
+	<title>BacDup report</title>
+	<script src="configuration/report.js" type="text/javascript"></script>
+</head>
+
+<body style="background:url(configuration/BacDup.png) no-repeat 5px 25px;">
+
+<h1>Example</h1>
+
+
+<h2 class="expanded" id="hsection1" onclick="toggleSection('1')">Introduction</h2>
+<div id="section1" style="display:block">
+<p>This is example report [<a href="#ref1">1</a>]. It is used in testing.</p>
+
+<h3 class="expanded" id="hsection2" onclick="toggleSection('2')">Background</h3>
+<div id="section2" style="display:block">
+<p>Some background knowledge is required [<a href="#ref2">2</a>].</p>
+</div>
+</div>
+
+<h2 class="expanded" id="hsection3" onclick="toggleSection('3')">The Figure</h2>
+<div id="section3" style="display:block">
+<p>Here comes <a href="#fig1image">Figure 1</a>:</p>
+<div class="figure">
+	<table class="tabsettings">
+	<tr>
+		<td>plot type</td>
+		<td>
+			<select id="fig1setting2" onchange="updateFigure('fig1')">
+				<option selected="selected" value="scatterplot">scatter plot</option>
+				<option value="lines">line plot</option>
+				<option value="both">line-and-point plot</option>
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<td>values to visualize</td>
+		<td>
+			<select disabled="disabled" id="fig1setting3" onchange="updateFigure('fig1')">
+				<option selected="selected" value="data">random data</option>
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<td>methylation value range</td>
+		<td>
+			<select id="fig1setting4" onchange="updateFigure('fig1')">
+				<option value="full">full</option>
+				<option selected="selected" value="zoom">zoomed in</option>
+			</select>
+		</td>
+	</tr>
+	</table>
+	<br />
+	<a href="example_images/example_scatterplot_data_zoom_high_resolution.png" id="fig1imagehigh"><img alt="Figure 1" id="fig1image" height="700" src="example_images/example_scatterplot_data_zoom.png" width="700" /></a>
+	<p class="caption">
+		<span title="Open PDF"><a class="figicon" id="fig1pdf" href="example_pdfs/example_scatterplot_data_zoom.pdf"><img alt="Open PDF" height="20" onmouseout="pdficon(this, false)" onmouseover="pdficon(this)" src="configuration/pdf_inactive.png" width="20" /></a></span>
+		<a id="fig1caption" onmousedown="showHide('fig1description')" onmouseout="doCursor()" onmouseover="doCursor()">Figure 1</a>
+	</p>
+	<p class="figdescription" id="fig1description">Example figure of four data points displayed in different plots. The horizontal axis depicts methylation &beta; value, and the vertical axis represents a measurement. All values and colors were selected randomly.</p>
+</div>
+
+</div>
+
+<h2 class="expanded" id="hsection4" onclick="toggleSection('4')">Summary</h2>
+<div id="section4" style="display:block">
+<p>The generation of this report was successful.</p>
+</div>
+
+<h2 class="expanded" id="hsection5" onclick="toggleSection('5')">References</h2>
+<div id="section5" style="display:block">
+<ol>
+	<li><a id="ref1">Autores. Titulo. Revista número (año) pá-ginas</a></li>
+	<li><a id="ref2">Autores. Título. revista número (año) pág-inas</a></li>
+</ol>
+</div>
+
+<div id="copyright">
+	<div id="bacdup">
+	This report was generated on 2021-05-24 by <a href="http:">BacDup</a> version 
+	</div>
+</div>
+</body>
+</html>

@@ -84,10 +84,10 @@ complete.report <- function(report, report.type = "report") {
   
   ## Add list of references to the report
   if (length(report@references) != 0) {
-    report <-  bdp .add.section(report, "References", NULL)
+    report <-  bdp.add.section(report, "References", NULL)
     reftexts <- report@references
     reftexts <- paste0("<a id=\"ref", 1:length(reftexts), "\">", reftexts, "</a>")
-    rnb.add.list(report, as.list(reftexts), type = "o")
+    bdp.add.list(report, as.list(reftexts), type = "o")
   }
   
   ## Close any open sub-sections and sections
@@ -100,7 +100,7 @@ complete.report <- function(report, report.type = "report") {
   
   ## Add footer to the report
   
-  ##TODO comprobar que write.line sea correcto (writeLines)##
+  
   ##TODO terminar de decidir qué poner
   
   write.line("\n<div id=\"copyright\">", report@fname)
@@ -189,9 +189,9 @@ bdp.initialize.reports <- function(dir.reports, dir.configuration = "configurati
   }
   ## Copy configuration files
     ##TODO crear una imagen BacDup
-  cfiles <- c("arrow_down.png", "arrow_right.png", "BacDup.png", "pdf_active.png", "pdf_inactive.png", "report.css",
+  cfiles <- c("arrow_down.png", "arrow_right.png", "pdf_active.png", "pdf_inactive.png", "report.css",
               "report.js")
-  cfiles <- system.file(file.path("extdata", cfiles), package = "BacDup", mustWork = TRUE)
+  cfiles <- file.path("extdata", cfiles)
   return(all(file.copy(cfiles, dname)))
 }
 
@@ -310,8 +310,9 @@ setMethod("initialize", "Report",
               }
               ## Copy configuration files
               cfiles <- c("arrow_down.png", "arrow_right.png", "BacDup.png", "pdf_active.png", "pdf_inactive.png",
-                          "report.css", "report.js")
-              cfiles <- system.file(file.path("extdata", cfiles), package = "RnBeads", mustWork = TRUE)
+                         "report.css", "report.js")
+              #cfiles <- "~/git/BacDup/developer/test_R/configuration"
+              cfiles <- file.path("extdata", cfiles)
               if (!all(file.copy(cfiles, dname))) {
                 stop(paste("configuration could not be initialized in", dname))
               }
@@ -842,7 +843,7 @@ bdp.add.tables <- function(report, tables, setting.names, selected.table = 1L, i
   ## Create a table of settings
   wline(c("<div class=\"figure\" id=\"tab", n, "figure\">"), 0)
   if (length(setting.names) != 0) {
-    txt <- rnbreport.create.settings.table("tab", n, element.values, setting.names, elements[[selected.table]])
+    txt <- bdpreport.create.settings.table("tab", n, element.values, setting.names, elements[[selected.table]])
     if (is.null(txt)) {
       stop("missing plot file element descriptors")
     }
@@ -947,7 +948,7 @@ bdp.add.figure <- function(report, description, report.plots, setting.names = li
   
   ## Create a table of settings if necessary
   if (length(setting.names) != 0) {
-    txt <- rnbreport.create.settings.table("fig", fn, element.values, setting.names, felements[[selected.image]])
+    txt <- bdpreport.create.settings.table("fig", fn, element.values, setting.names, felements[[selected.image]])
     if (is.null(txt)) {
       stop("missing plot file element descriptors")
     }
