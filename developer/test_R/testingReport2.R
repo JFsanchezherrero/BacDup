@@ -1,7 +1,10 @@
 
+report.directory <- "BacDup_report2"
 
+setwd()
 
-report.directory <- "BacDup_report"
+setwd("/home/jfsanchez/git_repos/BacDup/developer/test_R")
+
 #
 source("utilities.R")
 source("report_class.R")
@@ -17,7 +20,6 @@ if (!bdp.initialize.reports(report.directory)) {
   stop(paste("Could not initialize reports in", report.directory))
 }
 ## Initialize the report
-
 report <- createReport(file.path(report.directory, "example.html"), "Example")
 
 ## Define references
@@ -28,10 +30,8 @@ report <- bdp.add.reference(report, rf1)
 report <- bdp.add.reference(report, rf2)
 
 ## Add report sections
-txt <- c("This is example report ", bdp.get.reference(report, rf1), ". It is used in testing.")
-report <- bdp.add.section(report, "Introduction", txt)
-txt <- c("Some background knowledge is required ", bdp.get.reference(report, rf2), ".")
-report <- bdp.add.section(report, "Background", txt, level = 2)
+report <- bdp.add.section(report, "Introduction", "example test")
+
 
 ## Create plots
 

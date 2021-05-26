@@ -64,3 +64,55 @@ lm_plotter(dups_stats, "phage_count", "total_dupGroups", "phage_count")
 lm_plotter(dups_stats, "hypothetical_coun", "total_dupGroups", "hypothetical_coun")
 lm_plotter(dups_stats, "pseudo", "total_dupGroups", "pseudo")
 
+# for each list of duplicate counts
+res <- as.numeric(unlist(strsplit(dups_stats$list_dups[35], ":")))
+summary(res)
+
+gghistogram(res)
+
+require(scales)
+ggviolin(res) + scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                             labels = trans_format("log10", math_format(10^.x))) + annotation_logticks(sides="l")
+
+
+ggviolin(log(res, base = 10)) + scale_y_continuous(trans = log10_trans(), labels = trans_format("log10", math_format(10^.x))) + ylim(0, 2)
+
+
+ggviolin(res, trim = TRUE) + scale_y_continuous(trans = "log10") + annotation_logticks(sides="l") 
+ggboxplot(res, add="jitter") + scale_y_continuous(trans = "log10") + annotation_logticks(sides="l") 
+
+
+## empirical cummulative density function
+ggecdf(res)
+
+
+
+
+
+
+ggdotchart_plot <- function(dups_df, sep, xlabel, var_name) {
+  max_entries <- length(rownames(dups_df)) 
+  dups_df['id'] <- rownames(dups_df)
+  dups_df = dups_df %>% select(., id, total_dupGroups, total_dups, all_of(var_name)) %>% 
+    pivot_longer(., -id,names_to = "Line", values_to = "Value")
+  
+  print(dups_df)
+  
+  p <- ggdotchart(dups_df, "id", y="Value", color="Line") + 
+    labs(y = "Counts") + labs(x = xlabel)
+
+    return(dups_df)
+}
+
+
+df <- ggdotchart_plot(dups_stats,10, 'Strains', 'genes')
+
+df[df$id=="GCF_003017805.1",]
+
+ggdotchart_plot(dups_stats, 10, 'Strains', 'total_prots')
+
+
+rownames(dups_stats)
+
+
+
