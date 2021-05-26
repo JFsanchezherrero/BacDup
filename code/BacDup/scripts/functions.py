@@ -5,6 +5,7 @@ import os
 import re
 from HCGB.functions.aesthetics_functions import debug_message
 from Bio import SeqIO
+from termcolor import colored
 
 ################################################################################
 def columns_dup_table():
