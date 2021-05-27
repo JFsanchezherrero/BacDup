@@ -1,3 +1,5 @@
+setwd("/home/jfsanchez/git_repos/BacDup/developer/test_R")
+
 #### --------------------------------------- ####
 ## Load packages
 #### --------------------------------------- ####
@@ -23,7 +25,7 @@ source("BacDup.R")
 
 ## set working dir and get data
 report.directory <- "BacDup_report2"
-#setwd("/home/jfsanchez/git_repos/BacDup/developer/test_R")
+
 
 #### --------------------------------------- ####
 ##      Get input data
@@ -90,10 +92,11 @@ report <- bdp.add.section(report, "Input data", input_description)
 dup_description <- c("Add some useful description")
 report <- bdp.add.section(report, "Duplication analysis summary", dup_description)
 
+##################################################
 ## Create plots
 ##################################################
+
 ## Linear representation of duplicates per strain
-##################################################
 report.plot1 <- createReportPlot("ggline_genes", report, high.png = 200)
 ggline_plot(dups_stats, 10, 'Strains', 'genes')
 off(report.plot1)
@@ -142,17 +145,40 @@ off(report.plot11)
 report.plot12 <- createReportPlot("lmplotter_pseudo", report, high.png = 200)
 lm_plotter(dups_stats, "pseudo", "total_dupGroups", "pseudo")
 off(report.plot12)
-##################################################
 
-##################################################
-## Generate report figure
-##################################################
-report.plots <- list(report.plot1, report.plot2, report.plot3,
+## plot duplicates distribution
+dups_stats$sample <- rownames(dups_stats)
+list_dups2 <- strsplit(dups_stats$list_dups, ":")
+melt_list_dups <- data.frame(id = rep(dups_stats$sample, lapply(list_dups2, length)), 
+                             values = as.numeric(unlist(list_dups2)))
+
+
+report.plot13 <- createReportPlot("boxplot", report, high.png = 200)
+ggplot(melt_list_dups, aes(x = id, y=values))  + 
+  geom_boxplot() + 
+  xlab("Strains") + 
+  ylab("Duplicates / group") + theme_classic( ) + #geom_jitter(color="red", size=0.6, alpha=0.9) +
+  theme(axis.text.x  = element_text(size=10, angle = 45, hjust = 1))
+off(report.plot13)
+
+report.plot14 <- createReportPlot("binplot", report, high.png = 200)
+ggplot(melt_list_dups, aes(x = id, y=values))  + 
+  geom_bin2d(bins=50, color="black") + 
+  xlab("Strains") + 
+  ylab("Duplicates / group") + theme_classic( ) +
+  theme(axis.text.x  = element_text(size=10, angle = 45, hjust = 1)) + 
+  scale_fill_gradientn(colours=rev(colorRampPalette(brewer.pal(5, "RdYlBu"))((10)))) 
+off(report.plot14)
+
+## Generate report figures
+
+## Figure 1
+report.plots1 <- list(report.plot1, report.plot2, report.plot3,
                      report.plot4, report.plot5, report.plot6,
                      report.plot7, report.plot8, report.plot9,
                      report.plot10, report.plot11, report.plot12)
 
-setting.names <- list(
+setting.names1 <- list(
   "Plot type" = c("ggline" = "Lines", "lmplotter" = "Regression"),
   "Values to visualize" = c("genes" = "Genes", 
                             "phage.count" = "# Phages", 
@@ -160,11 +186,23 @@ setting.names <- list(
                             "hypothetical.coun" = "#hypothetical",
                             "transpo" = "transposase",
                             "pseudo" = "Pseudogenes"
-                            )) 
+  )) 
 
 description <- c("Add a useful description")
 description <- paste(description, collapse = " ")
-report <- bdp.add.figure(report, description, report.plots, setting.names)
+report <- bdp.add.figure(report, description, report.plots1, setting.names1)
+
+
+## Figure 2
+report.plots2 <- list(report.plot13, report.plot14)
+
+setting.names2 <- list(
+  "Plot type" = c("boxplot" = "Box plots", "binplot" = "Bins plot")
+) 
+
+description2 <- c("Add a useful description")
+description2 <- paste(description2, collapse = " ")
+report <- bdp.add.figure(report, description2, report.plots2, setting.names2)
 
 #### --------------------------------------- ####
 ##            Close the report

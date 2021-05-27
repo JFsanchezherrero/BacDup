@@ -49,7 +49,7 @@ ggline_plot <- function(dups_stats, sep, xlabel, var_name) {
 
 
 ## read input table
-dups_stats <- read.table(file="info_annot.csv", header=TRUE, sep=',', row.names = 1)
+dups_stats <- read.table(file="/home/jfsanchez/git_repos/BacDup/developer/test_R/info_annot.csv", header=TRUE, sep=',', row.names = 1)
 
 colnames(dups_stats)
 
@@ -65,7 +65,8 @@ lm_plotter(dups_stats, "hypothetical_coun", "total_dupGroups", "hypothetical_cou
 lm_plotter(dups_stats, "pseudo", "total_dupGroups", "pseudo")
 
 # for each list of duplicate counts
-res <- as.numeric(unlist(strsplit(dups_stats$list_dups[35], ":")))
+test1 <- dups_stats[dups_stats$sample=="GCF_000010765.1",]
+res <- as.numeric(unlist(strsplit(test1$list_dups[1], ":")))
 summary(res)
 
 gghistogram(res)
@@ -100,7 +101,9 @@ ggdotchart_plot <- function(dups_df, sep, xlabel, var_name) {
   
   p <- ggdotchart(dups_df, "id", y="Value", color="Line") + 
     labs(y = "Counts") + labs(x = xlabel)
-
+  
+  print(p)
+  
     return(dups_df)
 }
 
@@ -112,7 +115,41 @@ df[df$id=="GCF_003017805.1",]
 ggdotchart_plot(dups_stats, 10, 'Strains', 'total_prots')
 
 
-rownames(dups_stats)
+library(data.table)
+library(RColorBrewer)
 
+dups_stats$sample <- rownames(dups_stats)
+list_dups2 <- strsplit(dups_stats$list_dups, ":")
+melt_list_dups <- data.frame(id = rep(dups_stats$sample, lapply(list_dups2, length)), 
+           values = as.numeric(unlist(list_dups2)))
+
+
+ggplot(melt_list_dups, aes(x = id, y=values))  + 
+  geom_boxplot() + 
+  xlab("Strains") + 
+  ylab("Duplicates / group") + theme_classic( ) + #geom_jitter(color="red", size=0.6, alpha=0.9) +
+  theme(axis.text.x  = element_text(size=10, angle = 45, hjust = 1))
+
+
+ggplot(melt_list_dups, aes(x = id, y=values))  + 
+  geom_boxplot() + 
+  xlab("Strains") + 
+  ylab("Duplicates / group") + theme_classic( ) + #geom_jitter(color="red", size=0.6, alpha=0.9) +
+  #theme(axis.text.x  = element_text(size=10, angle = 45, hjust = 1)) 
+  coord_flip()
+
+ggplot(melt_list_dups, aes(x = id, y=values))  + 
+  geom_bin2d(bins=50, color="black") + 
+  xlab("Strains") + 
+  ylab("Duplicates / group") + theme_classic( ) +
+  theme(axis.text.x  = element_text(size=10, angle = 45, hjust = 1)) + 
+  scale_fill_gradientn(colours=rev(colorRampPalette(brewer.pal(5, "RdYlBu"))((10)))) 
+  
+
+ggplot(melt_list_dups, aes(x = id, y=values))  + 
+  geom_count() +
+  xlab("Strains") + 
+  ylab("Duplicates / group") + theme_classic( ) + #geom_jitter(color="red", size=0.6, alpha=0.9) +
+  theme(axis.text.x  = element_text(size=10, angle = 45, hjust = 1))
 
 
