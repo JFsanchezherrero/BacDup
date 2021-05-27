@@ -39,7 +39,7 @@ input_stats <- ""
 #  Dup analysis
 ## from given folder read info_annot.csv in folder:
 ## - report/dups/info_annot.csv
-dups_stats <- read.table(file="./info_annot.csv", header=TRUE, sep=',', row.names = 1)
+dups_stats <- read.table(file="./data/info_annot.csv", header=TRUE, sep=',', row.names = 1)
 #### --------------------------------------- ####
 
 
