@@ -31,14 +31,6 @@ import BacDup.scripts.functions as BacDup_functions
 import BacDup.scripts.dup_searcher as dup_searcher
 import BacDup.modules.input_parser as input_parser
 
-###############
-#### TO DO ####
-###############
-# 6. get results annotation info from annotation csv file ######
-#                                          ######################## dup_annot -> dup_searcher -> input_parser  
-# 7. classify results by duplicated number #####################
-###################################################################################
-
 ##########################
 def run_search(arg_dict):
     

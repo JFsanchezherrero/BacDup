@@ -21,3 +21,5 @@ developer/test
 developer/test_ncbi_donwload/
 /.metadata/
 
+## R
+developer/test_R/.Rhistory

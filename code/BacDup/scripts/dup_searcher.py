@@ -3,6 +3,8 @@
 ## Jose F. Sanchez & Alba Moya                              ##
 ## Copyright (C) 2020-2021                                  ##
 ##############################################################
+from Bio.Cluster import Tree
+from pickle import TRUE
 '''
 Created on 3 dic. 2020
 @author: alba
@@ -24,7 +26,7 @@ from argparse import ArgumentParser
 
 import HCGB
 from HCGB.functions.aesthetics_functions import debug_message
-import HCGB.functions.time_functions as time_functions
+import HCGB.functions.time_functions as HCGB_time
 
 import BacDup
 import BacDup.scripts.functions as BacDup_functions
@@ -124,9 +126,6 @@ def get_dupannot(sample, blast_results_df, annot_table_file, debug):
     #get filtered_annot table
     filtered_annot = annot_table.loc[prot_id]
 
-    ## pseudogenes
-    print ("+ Pseudogenes would be used in the analysis and flagged appropriately...")
-    
     ###################################
     ## Get duplicate groups    
     ###################################
@@ -204,20 +203,57 @@ def get_dupannot(sample, blast_results_df, annot_table_file, debug):
         dup_id_count += 1
         df_group['dup_id'] = dup_id_count
         dup_annot_df_fixed = dup_annot_df_fixed.append(df_group)
+
+    ## add a column reflecting number of members with no PSEUDOGENES
     
     ## remove old dup_id column
     del dup_annot_df_fixed['tmp_dup_id']
     
+    ## pseudogenes
+    print ("+ Pseudogenes would be used in the analysis and flagged appropriately...")
+    
+    ### debug
+    #HCGB.functions.main_functions.print_all_pandaDF(dup_annot_df_fixed)
+    pseudo_free = dup_annot_df_fixed.copy()
+    pseudo_free = pseudo_free[pseudo_free['pseudo'] != True]
+
+    ## Check group of duplicates without pseudo
+    ## group & count
+    pseudo_free["count_dups_pseudo_free"] = pseudo_free.groupby("dup_id")["dup_id"].transform("count")
+    
+    ## Some proteins might be orphans if for some reason they do not fulfill cutoffs with
+    ## all members of a duplicated group. That might create some groups with only 1 protein.
+    pseudo_free = pseudo_free[pseudo_free["count_dups_pseudo_free"]>1]
+    
+    ## reset dup_ids for pseudo_free
+    dup_id_count2=0
+    pseudo_free['dup_id_pseudo_free'] = ""
+    df_grouped2 = pseudo_free.groupby('dup_id')
+    pseudo_free2 = pd.DataFrame()
+    for group, df_group2 in df_grouped2:
+        dup_id_count2 += 1
+        df_group2['dup_id_pseudo_free'] = dup_id_count2
+        pseudo_free2 = pseudo_free2.append(df_group2)
+
+    ## debug messages
+    if debug:
+        debug_message('pseudo_free annotation: ', 'yellow')
+        print(pseudo_free2)
+        
     ## debug messages
     if debug:
         debug_message('dup_annot_df_fixed: ', 'yellow')
         print (dup_annot_df_fixed)
-        
+
+    ## merge columns
+    frames2merge = [dup_annot_df_fixed, pseudo_free2[['dup_id_pseudo_free', 'count_dups_pseudo_free']]]
+    df_merge_all = pd.concat(frames2merge, axis=1, join='outer')
+    
     ## get some statistics
-    data2add = get_dup_stats(sample, dup_annot_df_fixed, annot_table, debug)
+    data2add = get_dup_stats(sample, df_merge_all, annot_table, debug)
 
     ## return         
-    return(dup_annot_df_fixed, data2add)
+    return(df_merge_all, data2add)
 
 ################################################################################
 def create_blast_results(sample, fasta_file, outdir, debug):
@@ -253,7 +289,7 @@ def create_blast_results(sample, fasta_file, outdir, debug):
             HCGB.functions.blast_functions.makeblastdb(db_path_name, fasta_file, makeblastdb_exe, 'prot') # HCGB function    
         
             ## print time stamp
-            time_functions.print_time_stamp(db_timestamp)
+            HCGB_time.print_time_stamp(db_timestamp)
         
         else:
             print (colored("\t+ BLAST database already available for sample %s [%s]" %(sample, read_time), 'green'))
@@ -262,9 +298,9 @@ def create_blast_results(sample, fasta_file, outdir, debug):
         HCGB.functions.blast_functions.blastp(blastp_exe, raw_blast, db_path_name, fasta_file, 1) # HCGB function
 
         ## print time stamp
-        time_functions.print_time_stamp(search_timestamp)
+        HCGB_time.print_time_stamp(search_timestamp)
     else:
-        read_time = time_functions.read_time_stamp(search_timestamp)
+        read_time = HCGB_time.read_time_stamp(search_timestamp)
         print (colored("\t+ Duplicate search already available for sample %s [%s]" %(sample, read_time), 'green'))
             
     return (raw_blast)
