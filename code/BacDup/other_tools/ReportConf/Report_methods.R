@@ -191,7 +191,7 @@ bdp.initialize.reports <- function(dir.reports, dir.configuration = "configurati
     ##TODO crear una imagen BacDup
   cfiles <- c("arrow_down.png", "arrow_right.png", "pdf_active.png", "pdf_inactive.png", "report.css",
               "report.js")
-  cfiles <- file.path("extdata", cfiles)
+  cfiles <- file.path("ReportConf/configuration", cfiles)
   return(all(file.copy(cfiles, dname)))
 }
 
@@ -312,7 +312,7 @@ setMethod("initialize", "Report",
               cfiles <- c("arrow_down.png", "arrow_right.png", "BacDup.png", "pdf_active.png", "pdf_inactive.png",
                          "report.css", "report.js")
               #cfiles <- "~/git/BacDup/developer/test_R/configuration"
-              cfiles <- file.path("extdata", cfiles)
+              cfiles <- file.path("ReportConf/configuration", cfiles)
               if (!all(file.copy(cfiles, dname))) {
                 stop(paste("configuration could not be initialized in", dname))
               }
