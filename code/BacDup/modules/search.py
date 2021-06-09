@@ -3,7 +3,6 @@
 ## Jose F. Sanchez & Alba Moya                              ##
 ## Copyright (C) 2020-2021                                  ##
 ##############################################################
-from scipy.io.matlab.mio4 import order_codes
 '''
 Created on 13 dic. 2020
 @author: alba

@@ -5,7 +5,7 @@ __all__ = [
     'config',
     'input_parser',
     'search',
-    'dup_plotter',
+    'create_report',
     'info'
     
 ]

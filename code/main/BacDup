@@ -163,10 +163,25 @@ subparser_search.set_defaults(func=BacDup.modules.search.run_search)
 
 ##------------------------------ dup_plotter ---------------------- ##
 subparser_plot = subparsers.add_parser(
-    'dup_plotter',
-    help='Creates plot for visualization',
-    description='.',
+    'report',
+    help='Creates plots and report',
+    description='Creates interactive plots for each sample and a full report for visualization'
 )
+
+in_out_plot = subparser_plot.add_argument_group("Input/Output")
+in_out_plot.add_argument("-i", "--input_folder", help="Input folder containing project information.", required= not any(elem in help_options for elem in sys.argv))
+
+config_plot = subparser_plot.add_argument_group("Configuration")
+config_plot.add_argument("--debug", action="store_true", default=False)
+config_plot.add_argument("--in_sample", help="File containing a list of samples to include (one per line) from input information [Default OFF].")
+config_plot.add_argument("--ex_sample", help="File containing a list of samples to exclude (one per line) from input information [Default OFF].")
+
+help_plot = subparser_plot.add_argument_group("Additional information")
+help_plot.add_argument("--input_help", action="store_true", help="Provide additional help on input format")
+help_plot.add_argument("--project_help", action="store_true", help="Project mode additional information")
+
+subparser_plot.set_defaults(func=BacDup.modules.create_report.run_report)   
+
 
 
 ## space
