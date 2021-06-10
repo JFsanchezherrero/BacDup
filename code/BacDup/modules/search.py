@@ -170,7 +170,8 @@ def run_search(arg_dict):
             data2add_entry = dup_searcher.get_dup_stats(sample, dup_annot_df, annot_table, arg_dict.debug)
             
         ## merge data
-        data2add = data2add.append(data2add_entry)
+        #data2add_entry = data2add_entry.reset_index()
+        data2add = data2add.append(data2add_entry, ignore_index=False)
     
     ### report generation
     HCGB.functions.aesthetics_functions.boxymcboxface("Summarizing duplicated search")

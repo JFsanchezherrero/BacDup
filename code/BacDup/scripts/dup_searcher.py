@@ -31,6 +31,19 @@ import HCGB.functions.time_functions as HCGB_time
 import BacDup
 import BacDup.scripts.functions as BacDup_functions
 
+## set words to exclude regarding phages
+words2exclude_phages = ['integrase', 'terminase',
+                     'phage',  'lysin', 'endolysin', 'holin', 
+                     'capsid', 'tail', 'bacteriophage', 
+                     'portal', 
+                     'tapemeasure', 'tape measure', 
+                     'baseplate', 'base plate',
+                     'virion', 'antirepressor', 'excisionase',
+                     'Cro-like represessor', 'CI-like repressor'
+                     'rIIA lysis', 'rI lysis', 'rIIB lysis',
+                     'head decoration', 'HNH endonuclease', 'single-stranded DNA-binding protein']
+
+
 ################################################################################
 def get_dup_stats(sample, dup_annot_df, annot_table, debug):
     '''Generate some statistics for the duplicated analysis
@@ -38,18 +51,27 @@ def get_dup_stats(sample, dup_annot_df, annot_table, debug):
     
     data2add = pd.DataFrame(columns=BacDup_functions.columns_dup_table())
     
-    ## add info for each
+    ################################################
+    ## add info for each grouping of duplicates
+    ################################################
     total_dupGroups = len(dup_annot_df["dup_id"].unique())
     total_dups = dup_annot_df.shape[0]
     total_prots = annot_table.shape[0]
-     
-    ## get some information
-    
+    total_dupGroups_pseudoFree = len(dup_annot_df["dup_id_pseudo_free"].unique())
+    total_dupGroups_pseudoMobileFree = len(dup_annot_df["dup_id_mobile_free"].unique())
+
+    ################################################
+    ## get some information from duplicated genes
+    ################################################
     # eg. transposases
-    transposases_count = dup_annot_df[ dup_annot_df['product'].str.contains('transposa')].shape[0]
+    transposases_count = dup_annot_df[ dup_annot_df['product'].str.contains('transposase')].shape[0]
     
-    # phage
-    phage_count = dup_annot_df[ dup_annot_df['product'].str.contains('phage')].shape[0]
+    # phage associated
+    dup_annot_df_tmp = dup_annot_df.copy()
+    for w in words2exclude_phages:
+        dup_annot_df_tmp = dup_annot_df_tmp[ ~(dup_annot_df_tmp['product'].str.contains(w, regex=False ))]
+
+    phage_count = dup_annot_df_tmp.shape[0]
     
     # hypothetical
     hypothetical_count = dup_annot_df[ dup_annot_df['product'].str.contains('hypothetical')].shape[0]
@@ -59,47 +81,73 @@ def get_dup_stats(sample, dup_annot_df, annot_table, debug):
     
     # etc
     
-    ## create list of entries 
-    list_entries = dup_annot_df.groupby(["dup_id"]).count()['count_dups'].to_list()
-    list_entries = [x for x in list_entries if x==x] ## remove NaNs
-    list_entries = [int(x) for x in list_entries] ## convert to numbers
-    
-    ## get distribution statistics
-    ## get median, SD duplicates/group
-    ## get biggest group
-    d = scipy.stats.describe(list_entries)
-    df = pd.DataFrame([d], columns=d._fields)
-    #"nobs", "minmax", "mean", "variance", "skewness" , "kurtosis",
-    # d[0]    d[1]       d[2]    d[3]        d[4]        d[5]
-    
-    ## convert to strings to save
-    list_entries = [str(x) for x in list_entries]    
-    mean = "{0:.3g} ".format(d[2])
-    
-    known_genes_entries = dup_annot_df["gene"].to_list()
-    known_genes_entries = [x for x in known_genes_entries if x==x] ## remove NaNs
-    len_known_genes_entries = len(known_genes_entries)
-    
+    ## fill dataframe
+    data2add.loc[sample, "total_prots"] = total_prots
+    data2add.loc[sample, "n_groups_all"] = total_dupGroups
+    data2add.loc[sample, "n_dups_all"] = total_dups
+    data2add.loc[sample, "n_groups_pseudoFree"] = total_dupGroups_pseudoFree
+    data2add.loc[sample, "n_groups_pseudoMobFree"] = total_dupGroups_pseudoMobileFree
+    data2add.loc[sample, "transpo_count"] = transposases_count
+    data2add.loc[sample, "phage_count"] = phage_count
+    data2add.loc[sample, "hypothetical_coun"] = hypothetical_count
+    data2add.loc[sample, "pseudo"] = pseudo_count
+   
     print(f"""
     \t\t+ Sample: {sample} 
-    \t\t {total_dups} proteins duplicated ({total_dupGroups} groups)
-    \t\t {mean} proteins/group 
-    \t\t Min/max: {d[1][0]}/{d[1][1]} proteins/group
-    \t\t Annotation:
-    \t\t  |- {len_known_genes_entries} characterized genes;
-    \t\t  |- {phage_count} phage proteins;
-    \t\t  |- {transposases_count} transposases proteins;
-    \t\t  |- {hypothetical_count} hypothetical proteins;
-    \t\t  |- {pseudo_count} pseudogenes;
-    """) 
+    \t\t {total_prots} total proteins annotated
 
-    ## fill dataframe
-    data2add.loc[sample] = [total_dupGroups, total_dups, total_prots, 
-                            len_known_genes_entries, phage_count, 
-                            transposases_count, hypothetical_count,
-                            pseudo_count,
-                            d[0], d[1], d[2], d[3], d[4], d[5],
-                            ":".join(list_entries)]
+    \t\t {total_dups} proteins duplicated 
+    \t\t Duplicate proteins annotation (non-exclusive):
+    \t\t  |- {phage_count} phage-associated proteins
+    \t\t  |- {transposases_count} transposases proteins
+    \t\t  |- {hypothetical_count} hypothetical proteins
+    \t\t  |- {pseudo_count} pseudogenes
+
+    \t\t Number of groups of duplicates including: """)
+    
+    ################################################
+    ## create statistics for each group 
+    ################################################
+    dupGroups_pseudoFree = dup_annot_df[dup_annot_df["dup_id_pseudo_free"]>0]
+    dupGroups_pseudoMobileFree = dup_annot_df[dup_annot_df["dup_id_mobile_free"]>0]
+    
+    groups_duplicates = {"All duplicates              " : ["all", dup_annot_df],
+                         "Pseudogene Free             " : ["pseudoFree", dupGroups_pseudoFree],
+                         "Pseudo, transpo & phage Free" : ["pseudoMobFree", dupGroups_pseudoMobileFree] }
+
+    for name, df_dup in groups_duplicates.items():
+        list_entries = df_dup[1].groupby(["dup_id"]).count()['count_dups'].to_list()
+        list_entries = [x for x in list_entries if x==x] ## remove NaNs
+        list_entries = [int(x) for x in list_entries] ## convert to numbers
+        
+        ## get distribution statistics
+        ## get median, SD duplicates/group
+        ## get biggest group
+        d = scipy.stats.describe(list_entries)
+        df = pd.DataFrame([d], columns=d._fields)
+        #"nobs", "minmax", "mean", "variance", "skewness" , "kurtosis",
+        # d[0]    d[1]       d[2]    d[3]        d[4]        d[5]
+        
+        ## convert to strings to save
+        list_entries = [str(x) for x in list_entries]    
+        mean = "{0:.3g} ".format(d[2])
+        counts_dups = len(df_dup[1]["dup_id"])
+        n_tot = d[0]
+        n_min = d[1][0]
+        n_max = d[1][1]
+        
+        ## fill dataframe
+        data2add.loc[sample, "n_groups_" + df_dup[0]] = n_tot
+        data2add.loc[sample, "n_dups_" + df_dup[0]] = counts_dups
+        data2add.loc[sample, "n_min_" + df_dup[0]] = n_min
+        data2add.loc[sample, "n_max_" + df_dup[0]] = n_max
+        data2add.loc[sample, "n_mean_" + df_dup[0]] = mean
+        data2add.loc[sample, "list_" + df_dup[0]] = ":".join(list_entries)
+        
+        ## print in screen
+        print(f"""\t\t  |- {name} = {n_tot} groups (n={counts_dups}; max={n_max}; min={n_min}; mean={mean})""")
+
+    print()
     return(data2add)
 
 ################################################################################
@@ -209,13 +257,21 @@ def get_dupannot(sample, blast_results_df, annot_table_file, debug):
     ## remove old dup_id column
     del dup_annot_df_fixed['tmp_dup_id']
     
-    ## pseudogenes
+    ######################################
+    ## Filter pseudogenes
+    ######################################
     print ("+ Pseudogenes would be used in the analysis and flagged appropriately...")
     
     ### debug
     #HCGB.functions.main_functions.print_all_pandaDF(dup_annot_df_fixed)
     pseudo_free = dup_annot_df_fixed.copy()
     pseudo_free = pseudo_free[pseudo_free['pseudo'] != True]
+
+    ## debug messages
+    if debug:
+        debug_message('Dimension dataframe: ', 'yellow')
+        print("Before:" + str(dup_annot_df_fixed.shape))
+        print("After:" + str(pseudo_free.shape))
 
     ## Check group of duplicates without pseudo
     ## group & count
@@ -239,14 +295,75 @@ def get_dupannot(sample, blast_results_df, annot_table_file, debug):
     if debug:
         debug_message('pseudo_free annotation: ', 'yellow')
         print(pseudo_free2)
+    
+    ######################################
+    ## Filter phages and transposases
+    ######################################
+    print ("+ Genes annotated as Mobile elements (phages and transposases) would be used in the analysis and flagged appropriately...")
+    
+    ## copy elements
+    mobile_free = pseudo_free2.copy()
+
+    # debug messages
+    if debug:
+        debug_message('Dimension dataframe: ', 'yellow')
+        print("Before:" + str(dup_annot_df_fixed.shape))
+        print("After:" + str(mobile_free.shape))
+
+    ## get words to exclude
+    words2exclude = words2exclude_phages + ['transposase']
+    for w in words2exclude:
+        before_count = mobile_free.shape[0]
+        mobile_free = mobile_free[ ~(mobile_free['product'].str.contains(w, regex=False ))]
+    
+        ## TODO: save statistic into dataframe?
         
+        # debug messages
+        if debug:
+            print("--------------------------")
+            debug_message('Remove: ' + w, 'yellow')
+            after_count = mobile_free.shape[0]
+            print ("%s elements left " %after_count)
+            print ("%s elements removed " %(before_count-after_count))
+            
+    
+    ## Check group of duplicates without pseudo
+    ## group & count
+    mobile_free["count_dups_mobile_free"] = mobile_free.groupby("dup_id")["dup_id"].transform("count")
+    
+    ## Some proteins might be orphans if for some reason they do not fulfill cutoffs with
+    ## all members of a duplicated group. That might create some groups with only 1 protein.
+    mobile_free = mobile_free[mobile_free["count_dups_mobile_free"]>1]
+    
+    ## reset dup_ids for pseudo_free
+    dup_id_count3=0
+    mobile_free['dup_id_mobile_free'] = ""
+    df_grouped3 = mobile_free.groupby('dup_id')
+    mobile_free2 = pd.DataFrame()
+    for group, df_group3 in df_grouped3:
+        dup_id_count3 += 1
+        df_group3['dup_id_mobile_free'] = dup_id_count3
+        mobile_free2 = mobile_free2.append(df_group3)
+
+    ## debug messages
+    if debug:
+        debug_message('mobile_free annotation: ', 'yellow')
+        print(mobile_free2)
+
+    ###################################
+    ## Merge all duplicates groups
+    ###################################
+    
     ## debug messages
     if debug:
         debug_message('dup_annot_df_fixed: ', 'yellow')
         print (dup_annot_df_fixed)
 
     ## merge columns
-    frames2merge = [dup_annot_df_fixed, pseudo_free2[['dup_id_pseudo_free', 'count_dups_pseudo_free']]]
+    frames2merge = [dup_annot_df_fixed, 
+                    pseudo_free2[['dup_id_pseudo_free', 'count_dups_pseudo_free']],
+                    mobile_free2[['dup_id_mobile_free', 'count_dups_mobile_free']]
+                    ]
     df_merge_all = pd.concat(frames2merge, axis=1, join='outer')
     
     ## get some statistics

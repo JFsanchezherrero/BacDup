@@ -9,10 +9,17 @@ from termcolor import colored
 
 ################################################################################
 def columns_dup_table():
-    columns = ["total_dupGroups", "total_dups", "total_prots", 
-               "genes", "phage_count", "transpo_count", "hypothetical_coun", "pseudo", 
-               "nobs", "minmax", "mean", "variance", "skewness" , "kurtosis",
-               "list_dups"]
+    columns = ["total_prots", 
+               "n_groups_all", "n_dups_all", 
+               "n_groups_pseudoFree", "n_dups_pseudoFree", 
+               "n_groups_pseudoMobFree", "n_dups_pseudoMobFree",
+               "phage_count", "transpo_count", 
+               "hypothetical_coun", 
+               "pseudo",  
+               "n_groups_all",  "n_dups_all", "n_min_all", "n_max_all", "n_mean_all", "list_all",
+               "n_groups_pseudoFree", "n_dups_pseudoFree", "n_min_pseudoFree", "n_max_pseudoFree", "n_mean_pseudoFree", "list_pseudoFree",
+               "n_groups_pseudoMobFree", "n_dups_pseudoMobFree", "n_min_pseudoMobFree", "n_max_pseudoMobFree", "n_mean_pseudoMobFree", "list_pseudoMobFree"
+               ]
     return(columns)
 
 ################################################################################

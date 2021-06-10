@@ -220,7 +220,7 @@ def init_db_object(debug):
     filename_stamp_parse = db_folder + '/timestamp_db.txt'
     if os.path.isfile(filename_stamp_parse):
         stamp = time_functions.read_time_stamp(filename_stamp_parse)
-        days_passed = time_functions.get_diff_time(stamp)
+        days_passed = time_functions.get_diff_time(filename_stamp_parse)
         
         ## debug messages
         if debug:
