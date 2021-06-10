@@ -108,6 +108,7 @@ genbank_parameters_input = subparser_input.add_argument_group("NCBI Taxonomy id 
 genbank_parameters_input.add_argument("--assembly_level", help="Assembly level of the genomes to download", choices=['complete', 'chromosome', 'scaffold', 'contig', 'all'])
 genbank_parameters_input.add_argument("--k_random", type=float, help="Number of entries to randomly select. Provide -1 for all entries")
 genbank_parameters_input.add_argument("--section", help="Decide to download either from GenBank or RefSeq.", choices=['refseq', 'genbank'])
+genbank_parameters_input.add_argument("--dry_run", action="store_true", help="Get available entries and generated subset but exit the process.")
 
 config_input = subparser_input.add_argument_group("Configuration")
 config_input.add_argument("--db_folder", metavar="", help="Folder to store or containing database with GenBank and RefSeq entries previously downloaded")

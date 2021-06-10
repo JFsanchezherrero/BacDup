@@ -267,6 +267,9 @@ def parse_annot_file(name, folder_out_input, annot_file, output_path, Debug, ref
     
 ####################################
 def parse_options(arg_dict):
+    
+    outdir = os.path.abspath(arg_dict.output_folder)
+
     ## TODO: Now set as mutually_exclusive group. It might be Set to multiple options
     ## ATTENTION: df_accID merge generated dataframe
     
@@ -522,6 +525,14 @@ def parse_options(arg_dict):
         
         ## save into file
         file_info = os.path.join(input_info_dir, 'info.txt')
+        
+        ## stop here if dry_run
+        if arg_dict.dry_run:
+            print ("ATTENTION: Dry run mode selected. Stopping the process here.")
+            print("All available entries listed and printed in file: "+ os.path.join(input_info_dir, 'all_entries.txt'))
+            print("Subset of entries generated and printed in file: "+ os.path.join(input_info_dir, 'Downloaded.txt'))
+            print ("\n\nIf random numbers selected, take into account re-running this process might produce different results.")
+            exit()
         
         #################
         ## call NCBI_downloader
