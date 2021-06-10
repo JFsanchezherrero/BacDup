@@ -130,7 +130,7 @@ def get_dup_stats(sample, dup_annot_df, annot_table, debug):
         
         ## convert to strings to save
         list_entries = [str(x) for x in list_entries]    
-        mean = "{0:.3g} ".format(d[2])
+        mean = "{0:.3g}".format(d[2])
         counts_dups = len(df_dup[1]["dup_id"])
         n_tot = d[0]
         n_min = d[1][0]

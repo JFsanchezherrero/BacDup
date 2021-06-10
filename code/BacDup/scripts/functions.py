@@ -9,7 +9,7 @@ from termcolor import colored
 
 ################################################################################
 def columns_dup_table():
-    columns = ["total_prots", 
+    columns = ["total_prots", "genome_len",
                "n_groups_all", "n_dups_all", 
                "n_groups_pseudoFree", "n_dups_pseudoFree", 
                "n_groups_pseudoMobFree", "n_dups_pseudoMobFree",
