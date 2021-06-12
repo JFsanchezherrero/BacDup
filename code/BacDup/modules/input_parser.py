@@ -16,11 +16,15 @@ import sys
 import argparse
 import time
 from Bio import SeqIO
-import HCGB
-from HCGB.functions.aesthetics_functions import debug_message
-import HCGB.functions.time_functions as time_functions
 from termcolor import colored
 import pandas as pd
+
+## import HCGB
+from HCGB.functions.aesthetics_functions import debug_message
+import HCGB.functions.time_functions as HCGB_time
+import HCGB.functions.files_functions as HCGB_files
+import HCGB.functions.aesthetics_functions as HCGB_aes
+import HCGB.functions.main_functions as HCGB_main
 
 ## my modules
 import BacDup
@@ -47,9 +51,9 @@ def run_input(arg_dict):
         exit()
     
     BacDup_functions.pipeline_header('BacDup')
-    HCGB.functions.aesthetics_functions.boxymcboxface("Preparing input files")
+    HCGB_aes.boxymcboxface("Preparing input files")
     print ("--------- Starting Process ---------")
-    time_functions.print_time()
+    HCGB_time.print_time()
     
     ## init time
     start_time_total = time.time()
@@ -60,7 +64,7 @@ def run_input(arg_dict):
 
     ## output folder    
     print ("\n+ Create output folder(s):")
-    HCGB.functions.files_functions.create_folder(outdir)
+    HCGB_files.create_folder(outdir)
 
     ## set defaults
     if not (arg_dict.assembly_level):
@@ -76,7 +80,7 @@ def run_input(arg_dict):
     else:
         arg_dict.project = True
         print ("+ Generate a directory containing information within the project folder provided")
-        final_dir = HCGB.functions.files_functions.create_subfolder("info", outdir)
+        final_dir = HCGB_files.create_subfolder("info", outdir)
     
     ## debug messages
     if (arg_dict.debug):
@@ -90,7 +94,7 @@ def run_input(arg_dict):
         
     ## get files
     print ()
-    HCGB.functions.aesthetics_functions.print_sepLine("-",50, False)
+    HCGB_aes.print_sepLine("-",50, False)
     print ('+ Getting input information provided... ')
     print ('+ Several options available:')
     print ('\t* Single/Multiple Annotation file:')
@@ -104,7 +108,7 @@ def run_input(arg_dict):
     time.sleep(1)
 
     ## time stamp
-    start_time_partial = time_functions.timestamp(start_time_total)
+    start_time_partial = HCGB_time.timestamp(start_time_total)
     
     #################################################
     ## Parse and obtain the type of input information provided
@@ -116,16 +120,16 @@ def run_input(arg_dict):
     ##               'plasmids_number','plasmids_ID'))
     
     ## time stamp
-    start_time_partial = time_functions.timestamp(start_time_partial)
+    start_time_partial = HCGB_time.timestamp(start_time_partial)
     
     ## parse information accordingly
     parse_information(arg_dict, df_accID, outdir)
 
     ### report generation
-    HCGB.functions.aesthetics_functions.boxymcboxface("Summarizing input files")
-    outdir_report = HCGB.functions.files_functions.create_subfolder("report", outdir)
+    HCGB_aes.boxymcboxface("Summarizing input files")
+    outdir_report = HCGB_files.create_subfolder("report", outdir)
 
-    input_report = HCGB.functions.files_functions.create_subfolder("input", outdir_report)
+    input_report = HCGB_files.create_subfolder("input", outdir_report)
     
     ## add df_accID.loc[sample,] information as csv into input folder
     df_accID.to_csv(os.path.join(input_report, 'info.csv'), index=True, header=True)
@@ -133,7 +137,7 @@ def run_input(arg_dict):
     ## maybe add a summary of the files?
     
     print ("\n*************** Finish *******************")
-    start_time_partial = time_functions.timestamp(start_time_total)
+    start_time_partial = HCGB_time.timestamp(start_time_total)
 
     print ("+ Exiting Input module.")
     return()
@@ -142,8 +146,8 @@ def run_input(arg_dict):
 def parse_information(arg_dict, df_accID, outdir):
 
     ### Parse df_accID
-    dict_input_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, df_accID, "input", arg_dict.debug)
-    dict_parse_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, df_accID, "parse", arg_dict.debug)
+    dict_input_folders = HCGB_files.outdir_project(outdir, arg_dict.project, df_accID, "input", arg_dict.debug)
+    dict_parse_folders = HCGB_files.outdir_project(outdir, arg_dict.project, df_accID, "parse", arg_dict.debug)
 
     ## debug messages
     if (arg_dict.debug):
@@ -170,7 +174,7 @@ def parse_information(arg_dict, df_accID, outdir):
         print()
         print ("\t+ Parsing sample: " + sample)
         
-        if (not HCGB.functions.files_functions.is_non_zero_file(parse_timestamp) and not HCGB.functions.files_functions.is_non_zero_file(input_timestamp)):
+        if (not HCGB_files.is_non_zero_file(parse_timestamp) and not HCGB_files.is_non_zero_file(input_timestamp)):
         
             ## TODO: Set threads to use in parallel
             process_OK = parse_annot_file(sample, folder_input, df_accID.loc[sample, 'annot_file'], dict_parse_folders[sample], arg_dict.debug, df_accID.loc[sample, 'genome'])
@@ -178,26 +182,26 @@ def parse_information(arg_dict, df_accID, outdir):
             if (process_OK):
             
                 ## link or copy annotation file into folder_input
-                HCGB.functions.files_functions.get_symbolic_link_file(df_accID.loc[sample, 'annot_file'], folder_input)
+                HCGB_files.get_symbolic_link_file(df_accID.loc[sample, 'annot_file'], folder_input)
                 
                 ## add df_accID.loc[sample,] information as csv into input folder
                 df_accID.loc[sample,].to_csv(os.path.join(folder_input, 'info.csv'), index=True, header=True)
                 
                 ## print time stamp
-                time_functions.print_time_stamp(input_timestamp)
+                HCGB_time.print_time_stamp(input_timestamp)
         
                 ## print time stamp
-                time_functions.print_time_stamp(parse_timestamp)
+                HCGB_time.print_time_stamp(parse_timestamp)
             else:
                 print(colored("\t+ Some error occurred for sample %s while parsing input options" %sample, 'red'))
                 
                 ## print time stamp
-                time_functions.print_time_stamp(os.path.join(folder_input, '.fail'))
+                HCGB_time.print_time_stamp(os.path.join(folder_input, '.fail'))
         
                 ## print time stamp
-                time_functions.print_time_stamp(os.path.join(dict_parse_folders[sample], '.fail'))
+                HCGB_time.print_time_stamp(os.path.join(dict_parse_folders[sample], '.fail'))
         else:
-            read_time = time_functions.read_time_stamp(parse_timestamp)
+            read_time = HCGB_time.read_time_stamp(parse_timestamp)
             print (colored("\t+ Input parsing already available for sample %s [%s]" %(sample, read_time), 'green'))
             print()
 
@@ -250,7 +254,7 @@ def parse_annot_file(name, folder_out_input, annot_file, output_path, Debug, ref
         
         elif(format=='gff'):
             print (colored('\t* GFF format file:.......[OK]', 'green'))
-            if (HCGB.functions.files_functions.is_non_zero_file(ref_file)):
+            if (HCGB_files.is_non_zero_file(ref_file)):
                 return(gff_parser.gff_parser_caller(annot_file, ref_file, output_path, Debug))
             else:
                 print(colored("ERROR: No genome reference file provided for this GFF annotation. Check input options provided.","red"))
@@ -293,7 +297,7 @@ def parse_options(arg_dict):
             BacDup_functions.file_readable_check(arg_dict.annot_file)
                 
             print (colored('\t* Multiple annotation files provided .......[OK]', 'green'))
-            dict_entries = HCGB.functions.main_functions.file2dictionary(arg_dict.annot_file, ',')
+            dict_entries = HCGB_main.file2dictionary(arg_dict.annot_file, ',')
             
             ## debug messages
             if (arg_dict.debug):
@@ -361,7 +365,7 @@ def parse_options(arg_dict):
                     BacDup_functions.file_readable_check(arg_dict.ref_file)
 
                     if (arg_dict.batch):
-                        ref_entries = HCGB.functions.main_functions.file2dictionary(arg_dict.ref_file, ',')
+                        ref_entries = HCGB_main.file2dictionary(arg_dict.ref_file, ',')
                         genome = ref_entries[name]
                     else:
                         genome = arg_dict.ref_file
@@ -382,9 +386,9 @@ def parse_options(arg_dict):
     elif (arg_dict.GenBank_id):
         ## get database path
         if (arg_dict.db_folder):
-            db_folder = HCGB.functions.files_functions.create_folder(os.path.abspath(arg_dict.db_folder))
+            db_folder = HCGB_files.create_folder(os.path.abspath(arg_dict.db_folder))
         else:
-            db_folder = HCGB.functions.files_functions.create_subfolder("db", os.path.abspath(arg_dict.output_folder))
+            db_folder = HCGB_files.create_subfolder("db", os.path.abspath(arg_dict.output_folder))
 
         ## debug messages
         if (arg_dict.debug):
@@ -410,7 +414,7 @@ def parse_options(arg_dict):
             print()
             
             ## call IDs into a list and create tmp folder
-            strains2get = HCGB.functions.main_functions.readList_fromFile(arg_dict.GenBank_id)
+            strains2get = HCGB_main.readList_fromFile(arg_dict.GenBank_id)
             strains2get = list(filter(None, strains2get))
                 
             ## debug messages
@@ -435,7 +439,7 @@ def parse_options(arg_dict):
             ## download
             print (colored('\t* A NCBI GenBank ID:.......[OK]', 'green'))
             print()
-            HCGB.functions.aesthetics_functions.print_sepLine("+", 75, False)
+            HCGB_aes.print_sepLine("+", 75, False)
             df_accID = BacDup.scripts.NCBI_downloader.NCBIdownload(arg_dict.GenBank_id, db_folder, arg_dict.debug)
     
     ## --------------------------------------- ##
@@ -457,7 +461,7 @@ def parse_options(arg_dict):
             BacDup_functions.file_readable_check(arg_dict.tax_id)
 
             ## get IDs into a list
-            taxIDs2get = HCGB.functions.main_functions.readList_fromFile(arg_dict.tax_id)
+            taxIDs2get = HCGB_main.readList_fromFile(arg_dict.tax_id)
 
         else:
             print (colored('\t* A NCBI Taxonomy ID:.......[OK]', 'green'))
@@ -496,9 +500,9 @@ def parse_options(arg_dict):
         ## get database path
         #################
         if (arg_dict.db_folder):
-            db_folder = HCGB.functions.files_functions.create_folder(os.path.abspath(arg_dict.db_folder))
+            db_folder = HCGB_files.create_folder(os.path.abspath(arg_dict.db_folder))
         else:
-            db_folder = HCGB.functions.files_functions.create_subfolder("db", outdir)
+            db_folder = HCGB_files.create_subfolder("db", outdir)
 
         ## debug messages            
         if arg_dict.debug:
@@ -518,20 +522,25 @@ def parse_options(arg_dict):
 
         ## print list and dictionary of possible and selected taxIDs
         outdir = os.path.abspath(arg_dict.output_folder)
-        final_dir = HCGB.functions.files_functions.create_subfolder("info", outdir)
-        input_info_dir = HCGB.functions.files_functions.create_subfolder("input", outdir)
-        HCGB.functions.main_functions.printList2file(os.path.join(input_info_dir, 'Downloaded.txt'), strains2get)
-        HCGB.functions.main_functions.printList2file(os.path.join(input_info_dir, 'all_entries.txt'), allstrains_available)
+        info_dir = HCGB_files.create_subfolder("info", outdir)
+        input_info_dir = HCGB_files.create_subfolder("input", info_dir)
+        HCGB_main.printList2file(os.path.join(input_info_dir, 'Downloaded.txt'), strains2get)
+        HCGB_main.printList2file(os.path.join(input_info_dir, 'all_entries.txt'), allstrains_available)
         
         ## save into file
         file_info = os.path.join(input_info_dir, 'info.txt')
         
         ## stop here if dry_run
         if arg_dict.dry_run:
+            print()
+            HCGB_aes.print_sepLine("*", 75, False)
             print ("ATTENTION: Dry run mode selected. Stopping the process here.")
-            print("All available entries listed and printed in file: "+ os.path.join(input_info_dir, 'all_entries.txt'))
-            print("Subset of entries generated and printed in file: "+ os.path.join(input_info_dir, 'Downloaded.txt'))
-            print ("\n\nIf random numbers selected, take into account re-running this process might produce different results.")
+            HCGB_aes.print_sepLine("*", 75, False)
+            print("+ All available entries listed and printed in file:\n\t"+ os.path.join(input_info_dir, 'all_entries.txt'))
+            print("+ Subset of entries generated and printed in file:\n\t"+ os.path.join(input_info_dir, 'Downloaded.txt'))
+            print ("\n\nIf random numbers selected, take into account re-running this process might produce different results.\n")
+            HCGB_aes.print_sepLine("*", 75, False)
+            print()
             exit()
         
         #################
