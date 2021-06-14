@@ -48,7 +48,8 @@ def gff_parser_caller(gff_file, ref_file, output_path, debug):
     
         ## parse
         with open(prot_file, "w") as out_handle:
-            SeqIO.write(protein_recs(gff_file, ref_recs, list_out_files, debug=debug), out_handle, "fasta")
+            SeqIO.write(protein_recs(gff_file, ref_recs, 
+                                     list_out_files, debug=debug), out_handle, "fasta")
         
         ## return information
         return (list_out_files)
@@ -121,8 +122,17 @@ def protein_recs(gff_file, ref_recs, list_out_files, debug=False):
                     if feature.strand == -1:
                         gene_seq = gene_seq.reverse_complement()
                     
-                    #delete STOP symbols
-                    protein_seq = gene_seq.translate(to_stop=True)
+                    # translate genome sequence
+                    table_code = feature.qualifiers["transl_table"][0]
+                    protein_seq = gene_seq.translate(table=table_code, to_stop=False)
+                    
+                    # delete STOP symbols
+                    # we set gene_seq.translate to include all stop codons to include
+                    # stop codons in pseudogenes. then, we removed last symbol * for
+                    # each sequence
+                    
+                    if protein_seq.endswith("*"):
+                        protein_seq = protein_seq[:-1]
                     
                     yield(SeqRecord(protein_seq, protID, "", ""))
 
