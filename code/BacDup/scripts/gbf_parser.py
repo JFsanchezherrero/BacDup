@@ -116,7 +116,9 @@ def gbf_parser(gbf_file, list_out_files, debug=False):
                         annot_df.loc[protID,["pseudo"]] = ["True"]            
                         table_code = feature.qualifiers["transl_table"][0]
                         pseudo_seq = genome_seq.translate(table=table_code, to_stop=False)
-                        
+                        if pseudo_seq.endswith("*"):
+                            pseudo_seq = pseudo_seq[:-1]
+
                         ## Debug messages               
                         if (debug):
                             print("***************************************")
