@@ -3,8 +3,8 @@ report.directory <- "BacDup_report2"
 
 setwd()
 
-setwd("/home/jfsanchez/git_repos/BacDup/developer/test_R")
-
+#setwd("/home/jfsanchez/git_repos/BacDup/developer/test_R")
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 #
 source("utilities.R")
 source("report_class.R")

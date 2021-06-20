@@ -1,7 +1,15 @@
-library(dplyr)
-library(tidyr)
-library(ggpubr)
-library(ggplot2)
+if (!require("dplyr")) {
+  install.packages("dplyr")
+  library(dplyr)}
+if (!require("tidyr")) {
+  install.packages("tidyr")
+  library(tidyr)}
+if (!require("ggpubr")) {
+  install.packages("ggpubr")
+  library(ggpubr)}
+if (!require("ggplot2")) {
+  install.packages("ggplot2")
+  library(ggplot2)}
 
 ## plot regression
 ggplotRegression <- function (fit, Xlabel_name, Ylabel_name) {
