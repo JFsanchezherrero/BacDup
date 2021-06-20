@@ -7,6 +7,7 @@ __all__ = [
     'NCBI_downloader',
     'functions',
     'format_checker',
+    'dup_plotter',
     'dup_searcher'
 ]
 

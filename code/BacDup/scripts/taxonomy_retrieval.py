@@ -131,12 +131,18 @@ def get_GenBank_ids(data_folder, taxID_list, random_k, debug, assembly_level_giv
     ##
     if random_k<0:
         list_entries = list(dict_entries.keys())
-        print ('All %s entries selected' %dict_entries_len)
-    
+        print ('+ All %s entries selected' %dict_entries_len)
     else:
-        print ("Selecting random entries retrieved:")
-        list_entries = random.choices(list(dict_entries.keys()), k=random_k)
-        print ('%s entries selected out of %s' %(str(random_k), str(dict_entries_len)))
+        if random_k > dict_entries_len:
+            print("+ Sample size desired larger than population.")
+            list_entries = list(dict_entries.keys())
+            print ('\tOnly %s entries selected out of %s specified' %(dict_entries_len, random_k))
+        else:
+            print ("+ Selecting random entries retrieved:")
+            list_entries = random.sample(set(list(dict_entries.keys())), k=random_k)
+            print ('\t%s entries selected out of %s' %(str(random_k), str(dict_entries_len)))
+    
+    print()    
     
     ## debug messages
     if debug:        
@@ -220,7 +226,7 @@ def init_db_object(debug):
     filename_stamp_parse = db_folder + '/timestamp_db.txt'
     if os.path.isfile(filename_stamp_parse):
         stamp = time_functions.read_time_stamp(filename_stamp_parse)
-        days_passed = time_functions.get_diff_time(stamp)
+        days_passed = time_functions.get_diff_time(filename_stamp_parse)
         
         ## debug messages
         if debug:

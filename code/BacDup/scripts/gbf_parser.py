@@ -19,6 +19,7 @@ import numpy as np
 
 from Bio import SeqIO, Seq
 from Bio.SeqRecord import SeqRecord
+from Bio.SeqFeature import FeatureLocation, ExactPosition
 from Bio.SeqIO.FastaIO import SimpleFastaParser
 
 from HCGB.functions.aesthetics_functions import debug_message
@@ -47,11 +48,9 @@ def gbf_parser_caller(annot_file, output_path, debug):
 ################################################################################
 def gbf_parser(gbf_file, list_out_files, debug=False):
     
-    #create an empty dataframe. 
-    
+    ## create dataframe. 
     ## get common column names
-    columns = columns_annot_table()
-    
+    columns = columns_annot_table()    
     annot_df = pd.DataFrame(data=None, columns=columns)
     genome_length = pd.DataFrame(data=None, columns=["length"])
     
@@ -70,45 +69,85 @@ def gbf_parser(gbf_file, list_out_files, debug=False):
               
             #sort by CDS type. Duplicate genes analysis needs coding regions to proteins.
             if feature.type=="CDS":
+                genome_seq = rec.seq[feature.location.nofuzzy_start:feature.location.nofuzzy_end]
                 if int(feature.strand) > 0:
                     strand = "pos"
                 else:
                     strand = "neg"
-            
+                    genome_seq = genome_seq.reverse_complement()
+                    
                 #we create an ID for each entry     
                 protID = feature.type + "_" + rec.id + "_" + str(feature.location.nofuzzy_start) + "_" + str(feature.location.nofuzzy_end) + "_" + strand
-                annot_df.loc[protID, ["rec_id", "start", "end", "strand"]] = [ID, feature.location.nofuzzy_start, feature.location.nofuzzy_end, strand]
+                annot_df.loc[protID, ["rec_id", "start", 
+                                      "end", "strand"]] = [ID, feature.location.nofuzzy_start, 
+                                                           feature.location.nofuzzy_end, strand]
                 qualif = feature.qualifiers
-
+                pseudo=False
+                
                 ## Debug messages               
                 if (debug):
                     debug_message('protID: ' + protID, 'yellow')
+                    
                     debug_message('qualif: ', 'yellow')
                     print (qualif)
-
+                    
+                    debug_message('feature: ', 'yellow')
+                    print(feature)
+                    
+                    debug_message('genome_seq: ', 'yellow')
+                    print(genome_seq)
+                
+                pseudo_seq = ""
+                ## fill datafarme
                 for keys, values in qualif.items():
-                    #fill the dataframe info
                     if keys not in columns:
                         continue
+                    
+                    ## Save keys into dataframe
                     annot_df.loc[protID,[keys]] = [values[0]]
                     
+                    ####################################
+                    ## Pseudogenes:
+                    ####################################
                     if keys=="pseudo":
-                        pseudo = "True"
-                        annot_df.loc[protID,["pseudo"]] = [pseudo]
-            
-                        #we create a FASTA file with protein sequences
-
+                        pseudo = True
+                        
+                        ## set pseudo True/False
+                        annot_df.loc[protID,["pseudo"]] = ["True"]            
+                        table_code = feature.qualifiers["transl_table"][0]
+                        pseudo_seq = genome_seq.translate(table=table_code, to_stop=False)
+                        
                         ## Debug messages               
                         if (debug):
-                            debug_message('feature: ', 'yellow')
-                            print(feature)
+                            print("***************************************")
+                            debug_message('Pseudogene: ', 'yellow')
+                            print("***************************************")
+                            debug_message('feature.location.nofuzzy_start: ', 'yellow')
+                            print(feature.location.nofuzzy_start)
+                            debug_message('feature.location.nofuzzy_end: ', 'yellow')
+                            print(feature.location.nofuzzy_end)
+                            debug_message('Translation table code: ', 'yellow')
+                            print(table_code)
+                            debug_message('genome_seq: ', 'yellow')
+                            print(genome_seq)
+                            debug_message('pseudo_seq: ', 'yellow')
+                            print(pseudo_seq)
+                            
                    
-                if keys=="translation":
-                    #pseudogenes have no translation item
-                    gene_seq = Seq.Seq(feature.qualifiers["translation"][0])
-                else:
-                    pass
+                ## create a sequence fasta entry
+                if (pseudo):
+                    # Pseudogenes have no translation item
+                    # set translated CDS even including *
+                    if len(pseudo_seq)!=0:
+                        gene_seq = pseudo_seq
+                    else:
+                        ## sometimes it might fail
+                        gene_seq=Seq.Seq('***')
 
+                else:
+                    ## CDS provided by genbank
+                    gene_seq = Seq.Seq(feature.qualifiers["translation"][0]) 
+                
                 yield(SeqRecord(gene_seq, protID,"",""))
                        
     ## print to file

@@ -3,7 +3,7 @@
 ## Jose F. Sanchez & Alba Moya                              ##
 ## Copyright (C) 2020-2021                                  ##
 ##############################################################
-from scipy.io.matlab.mio4 import order_codes
+from pandas._libs.missing import NA
 '''
 Created on 13 dic. 2020
 @author: alba
@@ -23,7 +23,9 @@ import pandas as pd
 
 import HCGB
 from HCGB.functions.aesthetics_functions import debug_message
-import HCGB.functions.time_functions as time_functions
+import HCGB.functions.aesthetics_functions as HCGB_aes
+import HCGB.functions.time_functions as HCGB_time
+import HCGB.functions.main_functions as HCGB_main
 from HCGB import sampleParser
 
 import BacDup.modules.info as info
@@ -61,9 +63,9 @@ def run_search(arg_dict):
     
     ### Start the analysis
     BacDup_functions.pipeline_header('BacDup')
-    HCGB.functions.aesthetics_functions.boxymcboxface("Search module")
+    HCGB_aes.boxymcboxface("Search module")
     print ("--------- Starting Process ---------")
-    time_functions.print_time()
+    HCGB_time.print_time()
     
     ## init time
     start_time_total = time.time()
@@ -91,7 +93,7 @@ def run_search(arg_dict):
         
     ## get files
     print ()
-    HCGB.functions.aesthetics_functions.print_sepLine("-",50, False)
+    HCGB_aes.print_sepLine("-",50, False)
     print ('+ Getting information provided... ')
     print ('+ Several options available:')
     print ('\t* BacDup project folder with initiated data')
@@ -112,11 +114,17 @@ def run_search(arg_dict):
     pd_samples_retrieved = parse_search_options(arg_dict)
    
     ## time stamp
-    start_time_partial = time_functions.timestamp(start_time_total)
+    start_time_partial = HCGB_time.timestamp(start_time_total)
     
     ## for each sample
-    dict_search_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, pd_samples_retrieved, "search", arg_dict.debug)
-    dict_dup_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, pd_samples_retrieved, "dups", arg_dict.debug)
+    dict_search_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, 
+                                                                        pd_samples_retrieved, "search", arg_dict.debug)
+    
+    dict_dup_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, 
+                                                                     pd_samples_retrieved, "dups", arg_dict.debug)
+
+    dict_parse_folders = HCGB.functions.files_functions.outdir_project(outdir, arg_dict.project, 
+                                                                     pd_samples_retrieved, "parse", arg_dict.debug)
 
     ## create results
     data2add = pd.DataFrame(columns=BacDup_functions.columns_dup_table())
@@ -133,7 +141,10 @@ def run_search(arg_dict):
             ## get results
             file_data = pd_samples_retrieved.loc[sample, 'file_data']
             format = pd_samples_retrieved.loc[sample, 'format']
-            filtered_data = dup_searcher.filter_data(sample, file_data, format, arg_dict.pident, arg_dict.evalue, arg_dict.percentage, arg_dict.bitscore, folder, arg_dict.debug)
+            filtered_data = dup_searcher.filter_data(sample, file_data, format, 
+                                                     arg_dict.pident, arg_dict.evalue, 
+                                                     arg_dict.percentage, arg_dict.bitscore, 
+                                                     folder, arg_dict.debug)
             
             ## timestamps 
             filter_timestamp = os.path.join(dict_dup_folders[sample], '.filter_success')
@@ -143,13 +154,14 @@ def run_search(arg_dict):
                 filtered_data.to_csv(sort_csv, header=True, index=False)
                 
                 ## print time stamp
-                time_functions.print_time_stamp(filter_timestamp)
+                HCGB_time.print_time_stamp(filter_timestamp)
             else:
-                read_time = time_functions.read_time_stamp(filter_timestamp)
+                read_time = HCGB_time.read_time_stamp(filter_timestamp)
                 print (colored("\t+ Filter results already available for sample %s [%s]" %(sample, read_time), 'green'))
             
             ## get annotation
-            (dup_annot_df, data2add_entry) = dup_searcher.get_dupannot(sample, filtered_data, annot_table_file, arg_dict.debug)
+            (dup_annot_df, data2add_entry) = dup_searcher.get_dupannot(sample, filtered_data, 
+                                                                       annot_table_file, arg_dict.debug)
             
             ##
             info_dup_file = os.path.join(dict_dup_folders[sample], 'info_dup.csv')
@@ -159,22 +171,31 @@ def run_search(arg_dict):
             dup_annot_df.to_csv(dup_annot_file, header=True)
             
             ## print time stamp
-            time_functions.print_time_stamp(annot_timestamp)
+            HCGB_time.print_time_stamp(annot_timestamp)
             
         else:
-            read_time = time_functions.read_time_stamp(annot_timestamp)
+            read_time = HCGB_time.read_time_stamp(annot_timestamp)
             print (colored("\t+ Duplicate annotation already available for sample %s [%s]" %(sample, read_time), 'green'))
     
             ## add info for each
-            dup_annot_df = HCGB.functions.main_functions.get_data(dup_annot_file, ',', "index_col=0")
-            annot_table = HCGB.functions.main_functions.get_data(annot_table_file, ',', "index_col=0")
+            dup_annot_df = HCGB_main.get_data(dup_annot_file, ',', "index_col=0")
+            annot_table = HCGB_main.get_data(annot_table_file, ',', "index_col=0")
             data2add_entry = dup_searcher.get_dup_stats(sample, dup_annot_df, annot_table, arg_dict.debug)
             
+
+        ## add genome length data
+        data2add_entry['genome_len'] = ''
+        len_df_file = os.path.join(dict_parse_folders[sample], 'length_df.csv')
+        if os.path.isfile(len_df_file):
+            len_data = HCGB_main.get_data(len_df_file, ',', "header=None")
+            data2add_entry['genome_len'] = len_data[1].sum()
+        
         ## merge data
-        data2add = data2add.append(data2add_entry)
+        #data2add_entry = data2add_entry.reset_index()
+        data2add = data2add.append(data2add_entry, ignore_index=False)
     
     ### report generation
-    HCGB.functions.aesthetics_functions.boxymcboxface("Summarizing duplicated search")
+    HCGB_aes.boxymcboxface("Summarizing duplicated search")
     outdir_report = HCGB.functions.files_functions.create_subfolder("report", outdir)
     dups_report = HCGB.functions.files_functions.create_subfolder("dups", outdir_report)
     
@@ -184,7 +205,7 @@ def run_search(arg_dict):
     ## maybe add a summary of the files?
     
     print ("\n*************** Finish *******************")
-    start_time_partial = time_functions.timestamp(start_time_total)
+    start_time_partial = HCGB_time.timestamp(start_time_total)
 
     print ("+ Exiting search module.")
     return()
@@ -227,13 +248,13 @@ def parse_search_options(arg_dict):
         ## debug messages
         if (arg_dict.debug):
             debug_message('pd_proteins:', 'yellow')
-            HCGB.functions.main_functions.print_all_pandaDF(pd_proteins)
+            HCGB_main.print_all_pandaDF(pd_proteins)
         
             debug_message('pd_annot:', 'yellow')
-            HCGB.functions.main_functions.print_all_pandaDF(pd_annot)
+            HCGB_main.print_all_pandaDF(pd_annot)
         
             debug_message('pd_samples_retrieved:', 'yellow')
-            HCGB.functions.main_functions.print_all_pandaDF(pd_samples_retrieved)
+            HCGB_main.print_all_pandaDF(pd_samples_retrieved)
         
     ## --------------------------------------- ##
     ## data on multiple sources
@@ -265,11 +286,11 @@ def parse_search_options(arg_dict):
                 BacDup_functions.file_readable_check(arg_dict.text_file)
                     
                 print (colored('\t* Multiple BLAST results files provided .......[OK]', 'green'))
-                dict_entries = HCGB.functions.main_functions.file2dictionary(arg_dict.text_file, ',')
+                dict_entries = HCGB_main.file2dictionary(arg_dict.text_file, ',')
 
                 ## check file is readable
                 BacDup_functions.file_readable_check(arg_dict.annot_table)
-                dict_entries_annot = HCGB.functions.main_functions.file2dictionary(arg_dict.annot_table, ',')
+                dict_entries_annot = HCGB_main.file2dictionary(arg_dict.annot_table, ',')
 
                 ## Check dictionaries contain same information
                 if (dict_entries.keys() == dict_entries_annot.keys()):
@@ -349,12 +370,12 @@ def parse_search_options(arg_dict):
     
                 ## check if ok
                 BacDup_functions.file_readable_check(arg_dict.fasta_prot)
-                dict_entries = HCGB.functions.main_functions.file2dictionary(arg_dict.fasta_prot, ',')
+                dict_entries = HCGB_main.file2dictionary(arg_dict.fasta_prot, ',')
 
                 ## check file is readable
                 BacDup_functions.file_readable_check(arg_dict.annot_table)
                 print (colored('\t* Multiple annotation tables provided .......[OK]', 'green'))
-                dict_entries_annot = HCGB.functions.main_functions.file2dictionary(arg_dict.annot_table, ',')
+                dict_entries_annot = HCGB_main.file2dictionary(arg_dict.annot_table, ',')
 
                 ## Check dictionaries contain right information
                 if (dict_entries.keys() == dict_entries_annot.keys()):
