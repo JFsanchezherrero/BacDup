@@ -3,8 +3,6 @@
 ## Jose F. Sanchez & Alba Moya                              ##
 ## Copyright (C) 2020-2021                                  ##
 ##############################################################
-from Bio.Cluster import Tree
-from pickle import TRUE
 '''
 Created on 3 dic. 2020
 @author: alba
@@ -119,23 +117,33 @@ def get_dup_stats(sample, dup_annot_df, annot_table, debug):
         list_entries = df_dup[1].groupby(["dup_id"]).count()['count_dups'].to_list()
         list_entries = [x for x in list_entries if x==x] ## remove NaNs
         list_entries = [int(x) for x in list_entries] ## convert to numbers
-        
+
         ## get distribution statistics
         ## get median, SD duplicates/group
         ## get biggest group
-        d = scipy.stats.describe(list_entries)
-        df = pd.DataFrame([d], columns=d._fields)
-        #"nobs", "minmax", "mean", "variance", "skewness" , "kurtosis",
-        # d[0]    d[1]       d[2]    d[3]        d[4]        d[5]
-        
-        ## convert to strings to save
-        list_entries = [str(x) for x in list_entries]    
-        mean = "{0:.3g}".format(d[2])
-        counts_dups = len(df_dup[1]["dup_id"])
-        n_tot = d[0]
-        n_min = d[1][0]
-        n_max = d[1][1]
-        
+        if len(list_entries) > 0:
+            d = scipy.stats.describe(list_entries)
+            df = pd.DataFrame([d], columns=d._fields)
+            #"nobs", "minmax", "mean", "variance", "skewness" , "kurtosis",
+            # d[0]    d[1]       d[2]    d[3]        d[4]        d[5]
+            
+            ## convert to strings to save
+            list_entries = [str(x) for x in list_entries]    
+            mean = "{0:.3g}".format(d[2])
+            counts_dups = len(df_dup[1]["dup_id"])
+            n_tot = d[0]
+            n_min = d[1][0]
+            n_max = d[1][1]
+        else:
+            ## O duplicates
+            ## convert to strings to save
+            list_entries = []    
+            mean = 0
+            counts_dups = 0
+            n_tot = 0
+            n_min = 0
+            n_max = 0
+            
         ## fill dataframe
         data2add.loc[sample, "n_groups_" + df_dup[0]] = n_tot
         data2add.loc[sample, "n_dups_" + df_dup[0]] = counts_dups
@@ -160,11 +168,10 @@ def get_dupannot(sample, blast_results_df, annot_table_file, debug):
         debug_message('blast_results_df: ', 'yellow')
         print (blast_results_df)
         debug_message('annot_table_file: ' + annot_table_file, 'yellow')
-        
+    
     #get duplicated protein list
     qseqid = list(blast_results_df["qseqid"])
     sseqid =list(blast_results_df["sseqid"])
-    
     qseqid.extend(sseqid) ## Fix me
     prot_id = list(set(qseqid))
     
@@ -173,6 +180,23 @@ def get_dupannot(sample, blast_results_df, annot_table_file, debug):
     
     #get filtered_annot table
     filtered_annot = annot_table.loc[prot_id]
+
+    ###################################
+    ## No duplicated groups identified  
+    ###################################
+    if blast_results_df.shape[0] == 0:
+        filtered_annot['dup_id'] = ""
+        filtered_annot["count_dups"] = ""
+        filtered_annot["dup_id_pseudo_free"] = ""
+        filtered_annot["count_dups_pseudo_free"] = ""
+        filtered_annot["dup_id_mobile_free"] = ""
+        filtered_annot["count_dups_mobile_free"] = ""
+    
+        ## get some statistics
+        data2add = get_dup_stats(sample, filtered_annot, annot_table, debug)
+
+        ## return         
+        return(filtered_annot, data2add)
 
     ###################################
     ## Get duplicate groups    
